@@ -9,6 +9,7 @@ import eventRoutes from './routes/events.js';
 import analyticsRoutes from './routes/analytics.js';
 
 const app = express();
+app.disable('x-powered-by'); // do not tell every visitor which framework this is
 
 // Understand JSON request bodies.
 app.use(express.json());

@@ -11,7 +11,9 @@
     "start": "node --env-file=../.env server.js",
     "db:init": "node --env-file=../.env scripts/dbInit.js",
     "test": "node --env-file=../.env node_modules/vitest/vitest.mjs run",
-    "seed": "node --env-file=../.env scripts/seed.js"
+    "seed": "node --env-file=../.env scripts/seed.js",
+    "purge": "node --env-file=../.env scripts/purgeOldEvents.js",
+    "loadtest": "node --env-file=../.env scripts/loadTest.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
