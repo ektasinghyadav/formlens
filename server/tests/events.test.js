@@ -171,6 +171,7 @@ describe('abandonment (D-5, D-19g)', () => {
     const sid = await newSession();
     await post([ev(sid, { event_type: 'form_abandoned' })]);
     await waitForRows(sid, 1);
+    for (let i = 0; i < 25 && (await status(sid)).status !== 'abandoned'; i++) await new Promise((r) => setTimeout(r, 40));
     await post([ev(sid, { event_type: 'form_abandoned' })]); // already abandoned -> ignored
     await new Promise((r) => setTimeout(r, 200));
     expect(await rowCount(sid)).toBe(1);
