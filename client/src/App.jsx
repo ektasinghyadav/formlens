@@ -5,14 +5,18 @@ import FormList from './components/FormBuilder/FormList.jsx';
 import FormEditor from './components/FormBuilder/FormEditor.jsx';
 import Dashboard from './components/Dashboard/Dashboard.jsx';
 import FormFill from './components/FormFill/FormFill.jsx';
+import ProtectedRoute from './components/Auth/ProtectedRoute.jsx';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/admin/forms" element={<FormList />} />
-      <Route path="/admin/forms/:id/edit" element={<FormEditor />} />
-      <Route path="/admin/forms/:id/dashboard" element={<Dashboard />} />
+      {/* everything under /admin needs a login (FR-8.1) */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin/forms" element={<FormList />} />
+        <Route path="/admin/forms/:id/edit" element={<FormEditor />} />
+        <Route path="/admin/forms/:id/dashboard" element={<Dashboard />} />
+      </Route>
       <Route path="/f/:shareLink" element={<FormFill />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
