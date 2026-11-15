@@ -2,12 +2,12 @@
 // (date range), FR-8.1 / FR-8.2 (login + own forms only), NFR-3.1.
 // This file is only the "front desk": check who is asking, check the dates, call the engine.
 // All the maths lives in modules/analyticsEngine.js (which knows nothing about HTTP).
-// (Recommendations are added in Sprint 6.)
 import { Router } from 'express';
 import pool from '../db/connection.js';
 import requireAuth from '../middleware/auth.js';
 import requireOwnership from '../middleware/ownership.js';
 import { getSummary, getFunnel, getFieldMetrics } from '../modules/analyticsEngine.js';
+import { buildRecommendations, saveRecommendations } from '../modules/recommendEngine.js';
 
 const router = Router();
 const owner = [requireAuth, requireOwnership]; // login first, then "is this your form?" (FR-8.2)
@@ -54,6 +54,15 @@ router.get('/:formId/funnel', ...owner, readRange, async (req, res) => {
 });
 router.get('/:formId/fields', ...owner, readRange, async (req, res) => {
   res.json(await getFieldMetrics(pool, req.form.form_id, req.range));
+});
+
+// FR-7.2 + D-12: run the rules for this date range, REPLACE the form's saved recommendations
+// with the result, and return them (High first). The list in the database is therefore always
+// the latest run.
+router.get('/:formId/recommendations', ...owner, readRange, async (req, res) => {
+  const recommendations = await buildRecommendations(pool, req.form.form_id, req.range);
+  await saveRecommendations(pool, req.form.form_id, recommendations);
+  res.json(recommendations);
 });
 
 export default router;

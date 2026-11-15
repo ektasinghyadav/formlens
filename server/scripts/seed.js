@@ -19,7 +19,7 @@ const FIELDS = [
   { label: 'Full Name',     type: 'text',     required: true,  timeMs: 6000,  error: 0.03, correct: 0.4, abandon: 0.01 },
   { label: 'Email',         type: 'email',    required: true,  timeMs: 8000,  error: 0.12, correct: 0.5, abandon: 0.015 },
   { label: 'Phone',         type: 'number',   required: false, timeMs: 9000,  error: 0.14, correct: 0.5, abandon: 0.02 },
-  { label: 'Resume Upload', type: 'file',     required: true,  timeMs: 15000, error: 0.38, correct: 0.6, abandon: 0.28 }, // the HARD field
+  { label: 'Resume Upload', type: 'file',     required: true,  timeMs: 15000, error: 0.38, correct: 0.6, abandon: 0.34 }, // the HARD field
   { label: 'Cover Letter',  type: 'text',     required: false, timeMs: 45000, error: 0.05, correct: 0.3, abandon: 0.06 }, // the SLOW field
   { label: 'City',          type: 'dropdown', required: false, timeMs: 4000,  error: 0.01, correct: 0.3, abandon: 0.005 },
 ];
