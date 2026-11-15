@@ -306,7 +306,8 @@ router.post('/:formId/submit', async (req, res) => {
     // FOR UPDATE locks the session row, so two quick clicks cannot both succeed
     const [sessions] = await conn.query('SELECT status FROM sessions WHERE session_id = ? AND form_id = ? FOR UPDATE', [sessionId, formId]);
     if (!sessions[0]) { await conn.rollback(); return res.status(404).json({ error: 'Session not found' }); }
-    if (sessions[0].status !== 'active') { await conn.rollback(); return res.status(409).json({ error: 'This form was already submitted' }); }
+    // 'abandoned' is allowed: a tab-hide can mark a visit abandoned, and the person may come back and finish
+    if (sessions[0].status === 'submitted') { await conn.rollback(); return res.status(409).json({ error: 'This form was already submitted' }); }
 
     const fields = await loadFields(conn, formId);
     const byId = new Map(fields.map((f) => [f.field_id, f]));

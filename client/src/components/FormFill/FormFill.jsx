@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { createSession, getPublicForm, submitForm, uploadFile } from '../../api/forms.js';
+import { createTracker } from '../../tracker/eventTracker.js';
 import { validateAnswer } from './validate.js';
 
 export default function FormFill() {
@@ -38,6 +39,21 @@ export default function FormFill() {
     })();
     return () => { cancelled = true; };
   }, [shareLink]);
+
+  // The ONLY place FormFill touches tracking (SPEC section 4): start it when the form is on
+  // screen, stop it when the form goes away (e.g. after a successful submit). All the
+  // listening happens inside eventTracker.js.
+  useEffect(() => {
+    if (state !== 'ready') return undefined;
+    const tracker = createTracker({
+      formId: form.form_id,
+      sessionId,
+      endpoint: '/api/v1/events/batch',
+      container: formRef.current,
+    });
+    tracker.start();
+    return () => tracker.stop();
+  }, [state, form, sessionId]);
 
   // Check one field now and show or clear its message (runs on blur, and while typing after that).
   function check(field, value, file) {
@@ -132,6 +148,7 @@ export default function FormFill() {
           const error = errors[f.field_id];
           const common = {
             id,
+            'data-field-id': f.field_id, // how the tracker knows which field an event belongs to
             'aria-invalid': error ? 'true' : undefined,
             'aria-describedby': error ? errId : undefined,
             className: 'mt-1 w-full rounded border border-gray-500 px-3 py-2',

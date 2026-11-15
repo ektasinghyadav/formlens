@@ -9,9 +9,11 @@ import api, { setAuthToken } from '../api/client.js';
 import { AuthProvider } from '../components/Auth/AuthContext.jsx';
 import * as authApi from '../api/auth.js';
 import * as formsApi from '../api/forms.js';
+import { createTracker } from '../tracker/eventTracker.js';
 
 vi.mock('../api/auth.js');
 vi.mock('../api/forms.js');
+vi.mock('../tracker/eventTracker.js'); // tracking is tested elsewhere; keep it from writing to localStorage here
 
 afterEach(() => {
   cleanup();
@@ -43,6 +45,7 @@ describe('protected routes', () => {
   });
 
   it('keeps the public form page open without login', async () => {
+    createTracker.mockReturnValue({ start() {}, stop() {} });
     formsApi.getPublicForm.mockResolvedValue({ data: { form_id: 'F', title: 'Open to all', fields: [] } });
     formsApi.createSession.mockResolvedValue({ data: { session_id: 'S' } });
     renderAt('/f/abc123');

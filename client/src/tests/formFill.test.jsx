@@ -5,8 +5,10 @@ import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/re
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import FormFill from '../components/FormFill/FormFill.jsx';
 import * as formsApi from '../api/forms.js';
+import { createTracker } from '../tracker/eventTracker.js';
 
 vi.mock('../api/forms.js');
+vi.mock('../tracker/eventTracker.js'); // the tracker has its own tests; here we only check FormFill starts and stops it
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 
 const publicForm = {
@@ -20,7 +22,10 @@ const publicForm = {
   ],
 };
 
+const trackerStub = () => { const t = { start: vi.fn(), stop: vi.fn() }; createTracker.mockReturnValue(t); return t; };
+
 function open(link = 'tok') {
+  if (!createTracker.getMockImplementation() && !createTracker.mock.results.length) trackerStub();
   formsApi.getPublicForm.mockResolvedValue({ data: publicForm });
   formsApi.createSession.mockResolvedValue({ data: { session_id: 'S1' } });
   return render(
@@ -30,6 +35,35 @@ function open(link = 'tok') {
   );
 }
 const typeInto = (label, value) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+
+describe('tracking hand-off (FR-3.4, SPEC section 4)', () => {
+  it('starts the tracker on the form, with the session, and stops it when the form goes away', async () => {
+    const t = trackerStub();
+    formsApi.submitForm.mockResolvedValue({ data: {} });
+    const { unmount } = open();
+    await screen.findByRole('heading', { name: 'Job application' });
+    expect(createTracker).toHaveBeenCalledTimes(1);
+    const opts = createTracker.mock.calls[0][0];
+    expect(opts).toMatchObject({ formId: 'F1', sessionId: 'S1', endpoint: '/api/v1/events/batch' });
+    expect(opts.container.tagName).toBe('FORM');
+    expect(t.start).toHaveBeenCalledTimes(1);
+    expect(t.stop).not.toHaveBeenCalled();
+
+    typeInto(/Full name/, 'Asha');
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('heading', { name: 'Thank you' }); // form removed after submit
+    expect(t.stop).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it('puts data-field-id on every input so the tracker can tell fields apart', async () => {
+    trackerStub();
+    open();
+    await screen.findByRole('heading', { name: 'Job application' });
+    const ids = [...document.querySelectorAll('input, select')].map((el) => el.dataset.fieldId);
+    expect(ids).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
 
 describe('opening the form (FR-2.1, NFR-7.1)', () => {
   it('shows title, a visible label for every field, "(required)" in words, and the privacy notice', async () => {
