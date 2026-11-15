@@ -4,6 +4,7 @@
 import express from 'express';
 import authRoutes from './routes/auth.js';
 import formRoutes from './routes/forms.js';
+import sessionRoutes from './routes/sessions.js';
 import eventRoutes from './routes/events.js';
 import analyticsRoutes from './routes/analytics.js';
 
@@ -30,6 +31,7 @@ const api = express.Router();
 api.get('/health', (req, res) => res.json({ status: 'ok' }));
 api.use('/auth', authRoutes);
 api.use('/forms', formRoutes);
+api.use('/sessions', sessionRoutes);
 api.use('/events', eventRoutes);
 api.use('/analytics', analyticsRoutes);
 app.use('/api/v1', api);

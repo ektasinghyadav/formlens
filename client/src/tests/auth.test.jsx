@@ -8,8 +8,10 @@ import App from '../App.jsx';
 import api, { setAuthToken } from '../api/client.js';
 import { AuthProvider } from '../components/Auth/AuthContext.jsx';
 import * as authApi from '../api/auth.js';
+import * as formsApi from '../api/forms.js';
 
 vi.mock('../api/auth.js');
+vi.mock('../api/forms.js');
 
 afterEach(() => {
   cleanup();
@@ -40,9 +42,12 @@ describe('protected routes', () => {
     expect(screen.queryByText('Your forms')).toBeNull();
   });
 
-  it('keeps the public form page open without login', () => {
+  it('keeps the public form page open without login', async () => {
+    formsApi.getPublicForm.mockResolvedValue({ data: { form_id: 'F', title: 'Open to all', fields: [] } });
+    formsApi.createSession.mockResolvedValue({ data: { session_id: 'S' } });
     renderAt('/f/abc123');
-    expect(screen.getByRole('heading', { name: 'Form' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Open to all' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Admin login' })).toBeNull();
   });
 });
 

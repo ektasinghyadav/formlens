@@ -1,8 +1,10 @@
 // routes/forms.js - admin form management. Requirements: FR-1.1-1.4, FR-8.2.
-// (Public respondent endpoints on /forms/:shareLink/public etc. arrive in Sprint 3.)
+// Also holds the public respondent endpoints (no login): public form, upload, submit (FR-2.1-2.3, FR-4.1).
 import { Router } from 'express';
 import { randomUUID, randomBytes } from 'node:crypto';
+import { access } from 'node:fs/promises';
 import pool from '../db/connection.js';
+import { makeUpload, UPLOAD_DIR } from '../middleware/upload.js';
 import requireAuth from '../middleware/auth.js';
 import requireOwnership from '../middleware/ownership.js';
 
@@ -222,6 +224,134 @@ router.patch('/:formId/unpublish', ...owner, async (req, res) => {
   await pool.query("UPDATE forms SET status = 'unpublished' WHERE form_id = ?", [req.form.form_id]);
   const [rows] = await pool.query('SELECT * FROM forms WHERE form_id = ?', [req.form.form_id]);
   res.json(formSummary(rows[0]));
+});
+
+// =====================================================================
+// PUBLIC respondent endpoints - no login. Only PUBLISHED forms are reachable.
+// =====================================================================
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NUMBER_PATTERN = /^-?\d+(\.\d+)?$/;
+const MAX_ANSWER_LENGTH = 5000; // D-18c
+const FILE_REF_PATTERN = /^[0-9a-f-]{36}-[0-9a-f-]{36}$/; // "<field_id>-<uuid>"
+
+// Checks ONE answer against the field's rules. Returns { value } (null if left empty)
+// or { error }. The server never trusts the browser's own checks (FR-2.2, FR-2.3).
+async function checkAnswer(field, raw) {
+  if (raw !== undefined && raw !== null && typeof raw !== 'string') return { error: 'Invalid answer' };
+  const value = (raw ?? '').trim();
+  if (value === '') {
+    return field.is_required ? { error: 'This field is required' } : { value: null };
+  }
+  if (value.length > MAX_ANSWER_LENGTH) return { error: `Answer is too long (max ${MAX_ANSWER_LENGTH} characters)` };
+
+  const rules = field.validations || {};
+  const format = field.field_type === 'text' ? rules.format : field.field_type;
+  if (format === 'email' && !EMAIL_PATTERN.test(value)) return { error: 'Enter a valid email address, like name@example.com' };
+  if (format === 'number' && !NUMBER_PATTERN.test(value)) return { error: 'Enter a number, like 42' };
+  if (field.field_type === 'dropdown' && !rules.options.includes(value)) return { error: 'Choose one of the listed options' };
+  if (field.field_type === 'file') {
+    // the value must be a reference we issued for THIS field, and the file must exist
+    const ok = FILE_REF_PATTERN.test(value) && value.startsWith(`${field.field_id}-`);
+    if (!ok) return { error: 'Upload the file again' };
+    try {
+      await access(`${UPLOAD_DIR}${value}`);
+    } catch {
+      return { error: 'Upload the file again' };
+    }
+  }
+  return { value };
+}
+
+// GET /forms/:shareLink/public - what the respondent sees. No owner data (admin_id etc.).
+router.get('/:shareLink/public', async (req, res) => {
+  const [rows] = await pool.query("SELECT form_id, title FROM forms WHERE share_link = ? AND status = 'published'", [
+    req.params.shareLink,
+  ]);
+  if (!rows[0]) return res.status(404).json({ error: 'This form is not available' });
+  res.json({ form_id: rows[0].form_id, title: rows[0].title, fields: await loadFields(pool, rows[0].form_id) });
+});
+
+// POST /forms/:formId/upload?field_id=... - store one file for a file field (D-1, D-18a)
+router.post('/:formId/upload', async (req, res, next) => {
+  const [rows] = await pool.query(
+    `SELECT f.field_id, f.validations FROM fields f JOIN forms fo ON fo.form_id = f.form_id
+     WHERE f.field_id = ? AND f.form_id = ? AND f.field_type = 'file' AND fo.status = 'published'`,
+    [String(req.query.field_id || ''), req.params.formId]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'This form is not available' });
+
+  req.uploadPrefix = `${rows[0].field_id}-`;
+  // the size limit comes from the field's own setting; too big -> 400 (handled inside makeUpload)
+  makeUpload(rows[0].validations?.maxFileSizeMB ?? DEFAULT_FILE_MB)(req, res, (err) => {
+    if (err) return next(err);
+    if (!req.file) return res.status(400).json({ error: 'No file received' });
+    res.status(201).json({ file_ref: req.file.filename });
+  });
+});
+
+// POST /forms/:formId/submit - re-check every rule, then save everything in one transaction.
+router.post('/:formId/submit', async (req, res) => {
+  const { session_id: sessionId, responses } = req.body || {};
+  if (typeof sessionId !== 'string' || !Array.isArray(responses)) {
+    return res.status(400).json({ error: 'session_id and responses are required' });
+  }
+  const [forms] = await pool.query("SELECT form_id FROM forms WHERE form_id = ? AND status = 'published'", [req.params.formId]);
+  if (!forms[0]) return res.status(404).json({ error: 'This form is not available' });
+  const formId = forms[0].form_id;
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // FOR UPDATE locks the session row, so two quick clicks cannot both succeed
+    const [sessions] = await conn.query('SELECT status FROM sessions WHERE session_id = ? AND form_id = ? FOR UPDATE', [sessionId, formId]);
+    if (!sessions[0]) { await conn.rollback(); return res.status(404).json({ error: 'Session not found' }); }
+    if (sessions[0].status !== 'active') { await conn.rollback(); return res.status(409).json({ error: 'This form was already submitted' }); }
+
+    const fields = await loadFields(conn, formId);
+    const byId = new Map(fields.map((f) => [f.field_id, f]));
+    const answers = new Map();
+    for (const r of responses) {
+      if (!r || !byId.has(r.field_id) || answers.has(r.field_id)) {
+        await conn.rollback();
+        return res.status(400).json({ error: 'Unknown or repeated field in responses' });
+      }
+      answers.set(r.field_id, r.value);
+    }
+
+    const fieldErrors = {};
+    const clean = [];
+    for (const f of fields) {
+      const result = await checkAnswer(f, answers.get(f.field_id));
+      if (result.error) fieldErrors[f.field_id] = result.error;
+      else if (result.value !== null) clean.push({ field_id: f.field_id, value: result.value });
+    }
+    if (Object.keys(fieldErrors).length) {
+      await conn.rollback();
+      return res.status(400).json({ error: 'Please correct the highlighted fields', fieldErrors });
+    }
+
+    const submissionId = randomUUID();
+    await conn.query('INSERT INTO submissions (submission_id, session_id, form_id) VALUES (?, ?, ?)', [submissionId, sessionId, formId]);
+    for (const a of clean) {
+      await conn.query('INSERT INTO field_responses (response_id, submission_id, field_id, value) VALUES (?, ?, ?, ?)', [
+        randomUUID(), submissionId, a.field_id, a.value,
+      ]);
+    }
+    await conn.query("UPDATE sessions SET status = 'submitted', ended_at = NOW() WHERE session_id = ?", [sessionId]);
+    // D-4: the server writes form_submitted, in the same transaction, so it can never be duplicated
+    await conn.query(
+      "INSERT INTO events (event_id, session_id, field_id, form_id, event_type, timestamp) VALUES (?, ?, NULL, ?, 'form_submitted', NOW(3))",
+      [randomUUID(), sessionId, formId]
+    );
+    await conn.commit();
+    res.status(201).json({ submission_id: submissionId });
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 });
 
 export default router;

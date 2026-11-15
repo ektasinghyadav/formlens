@@ -16,6 +16,11 @@ afterAll(async () => {
 });
 
 describe('makeUpload(1) - 1 MB limit', () => {
+  it('uses a real folder path (no URL-encoded characters such as %20)', () => {
+    expect(UPLOAD_DIR).not.toContain('%');
+    expect(UPLOAD_DIR.endsWith('/server/uploads/')).toBe(true);
+  });
+
   it('accepts a small file and stores it under a random name', async () => {
     const res = await request(app).post('/up').attach('file', Buffer.alloc(1000, 'a'), '../../evil.txt');
     expect(res.status).toBe(200);
