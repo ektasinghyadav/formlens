@@ -36,11 +36,27 @@ function statusExpr(now) {
   };
 }
 
+// While a query is running, an identical request (same form, range and clock minute) waits for
+// that same query instead of starting its own. The dashboard asks for the funnel, the field
+// metrics and the recommendations at once, and the last one needs the first two again, so
+// without this the same ~200,000 events would be loaded four times at the same moment.
+// Nothing is kept afterwards (no cache), so a later request always sees fresh data.
+const running = new Map();
+function shareWhileRunning(key, work) {
+  if (!running.has(key)) running.set(key, work().finally(() => running.delete(key)));
+  return running.get(key);
+}
+const sharedKey = (kind, formId, { from, to, now }, extra = '') =>
+  JSON.stringify([kind, formId, from?.getTime() ?? null, to?.getTime() ?? null, Math.floor(now.getTime() / 60000), extra]);
+
 const fieldsOf = async (db, formId) =>
   (await db.query('SELECT field_id, label, position FROM fields WHERE form_id = ? ORDER BY position', [formId]))[0];
 
 // Status of every session in the range: Map(session_id -> 'submitted' | 'abandoned' | 'active')
-async function loadStatuses(db, formId, { from, to, now }) {
+function loadStatuses(db, formId, range) {
+  return shareWhileRunning(sharedKey('statuses', formId, range), () => queryStatuses(db, formId, range));
+}
+async function queryStatuses(db, formId, { from, to, now }) {
   const status = statusExpr(now);
   const range = rangeClause({ from, to });
   const [rows] = await db.query(
@@ -52,25 +68,29 @@ async function loadStatuses(db, formId, { from, to, now }) {
 
 // The field-level events of the sessions in the range, grouped by session and in time order:
 // Map(session_id -> [{ field_id, type, time(ms) }]).
-async function loadEventsBySession(db, formId, { from, to }, types) {
+function loadEventsBySession(db, formId, range, types) {
+  return shareWhileRunning(sharedKey('events', formId, range, types.join()), () => queryEvents(db, formId, range, types));
+}
+async function queryEvents(db, formId, { from, to }, types) {
   const range = rangeClause({ from, to });
   const [rows] = await db.query(
-    `SELECT e.session_id, e.field_id, e.event_type, e.timestamp, e.event_id
+    `SELECT e.session_id, e.field_id, e.event_type, e.timestamp
      FROM sessions s JOIN events e ON e.session_id = s.session_id
      WHERE s.form_id = ? ${range.sql} AND e.field_id IS NOT NULL AND e.event_type IN (?)
-     ORDER BY e.session_id, e.timestamp`,
+     ORDER BY e.session_id, e.timestamp, e.event_id`,
     [formId, ...range.params, types]
   );
   const bySession = new Map();
   for (const r of rows) {
     if (!bySession.has(r.session_id)) bySession.set(r.session_id, []);
-    bySession.get(r.session_id).push({ id: r.event_id, field_id: r.field_id, type: r.event_type, time: r.timestamp.getTime() });
+    bySession.get(r.session_id).push({ field_id: r.field_id, type: r.event_type, time: r.timestamp.getTime() });
   }
   // Events in the same millisecond have no natural order. Fix one: a focus comes before a
-  // blur, then by id, so the answer never changes between runs.
+  // blur; anything still tied keeps the database's order (by event id), because JavaScript's
+  // sort is stable. So the answer never changes between runs.
   const rank = { focus: 0, blur: 1 };
   for (const list of bySession.values()) {
-    list.sort((a, b) => a.time - b.time || (rank[a.type] ?? 2) - (rank[b.type] ?? 2) || (a.id < b.id ? -1 : 1));
+    list.sort((a, b) => a.time - b.time || (rank[a.type] ?? 2) - (rank[b.type] ?? 2));
   }
   return bySession;
 }

@@ -22,7 +22,7 @@
 //   correction_rate: F1 1/4=0.25 (S2)
 //   avg_time_ms: F0 (3000+4000+2000+1000+1000)/5=2200   F1 (2000+6000+4000)/3=4000   F2 (6000+3000)/2=4500
 //   abandonment_rate: F0 0/6=0, F1 2/4=0.5, F2 1/3=0.3333
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import pool from '../db/connection.js';
 import { getSummary, getFunnel, getFieldMetrics } from '../modules/analyticsEngine.js';
 import { buildFixture, createAdmin, createForm, addSession, wipeAdmins } from './helpers/analyticsFixture.js';
@@ -153,6 +153,43 @@ describe('getFieldMetrics (FR-5.2)', () => {
     const none = await getFieldMetrics(pool, fx.formId, { from: new Date('2030-01-01'), now: NOW });
     expect(none).toHaveLength(3);
     for (const r of none) expect([r.avg_time_ms, r.error_rate, r.correction_rate, r.abandonment_rate]).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe('simultaneous identical requests share one query, but nothing is cached (NFR-1.2)', () => {
+  const eventQueries = (spy) => spy.mock.calls.filter((c) => String(c[0]).includes('JOIN events e')).length;
+
+  it('a funnel and a field-metrics request at the same moment load the focus events only once each, and the same request twice loads once', async () => {
+    const spy = vi.spyOn(pool, 'query');
+    await Promise.all([getFunnel(pool, fx.formId, opts()), getFunnel(pool, fx.formId, opts()), getFunnel(pool, fx.formId, opts())]);
+    expect(eventQueries(spy)).toBe(1); // three identical requests, one query
+    spy.mockClear();
+    await Promise.all([getFunnel(pool, fx.formId, opts()), getFieldMetrics(pool, fx.formId, opts())]);
+    expect(eventQueries(spy)).toBe(2); // different event types: two queries, not one each per field of work
+    spy.mockRestore();
+  });
+
+  it('a later request runs a fresh query and sees new data (no caching)', async () => {
+    const adminId = await createAdmin(pool, 'engine-fresh');
+    admins.push(adminId);
+    const f = await createForm(pool, adminId, 'Fresh', ['A']);
+    const first = await getFunnel(pool, f.formId, { now: NOW });
+    expect(first[0].reached).toBe(0);
+    await addSession(pool, { ...f, started: new Date('2026-11-10T10:00:00Z'), status: 'abandoned', events: [[0, 'focus', 0]] });
+    const second = await getFunnel(pool, f.formId, { now: NOW });
+    expect(second[0].reached).toBe(1);
+  });
+
+  it('requests for different date ranges are NOT mixed up', async () => {
+    const [all, narrow] = await Promise.all([
+      getSummary(pool, fx.formId, { now: NOW }),
+      getSummary(pool, fx.formId, { from: fx.at(60), to: fx.at(20), now: NOW }),
+    ]);
+    expect(all.views).toBe(8);
+    expect(narrow.views).toBe(3);
+    const [fa, fb] = await Promise.all([getFunnel(pool, fx.formId, opts()), getFunnel(pool, fx.formId, { from: fx.at(60), to: fx.at(20), now: NOW })]);
+    expect(fa[0].reached).toBe(6);
+    expect(fb[0].reached).toBe(2);
   });
 });
 

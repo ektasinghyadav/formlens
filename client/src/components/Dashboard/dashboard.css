@@ -1,0 +1,78 @@
+/* dashboard.css - colours and small styles for the dashboard. Requirements: FR-6.1, NFR-4.2.
+   Colours are named by ROLE (series-1, text-primary ...) so light and dark swap in one place.
+   The values come from the validated palette (every set was run through the palette validator;
+   the funnel ramp was checked as an ordinal ramp). Dark mode uses its own steps, not a flip. */
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #6b6a65;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  --series-5: #e87ba4; --series-6: #008300; --series-7: #6250d6;
+  --other: #898781;
+  --ramp-1: #86b6ef; --ramp-2: #5598e7; --ramp-3: #2a78d6; --ramp-4: #1c5cab; --ramp-5: #104281;
+  --critical: #d03b3b; --warning: #fab219; --neutral-flag: #898781;
+  --good-text: #006300;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --muted: #a3a29b;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --series-5: #d55181; --series-6: #0ca30c; --series-7: #9085e9;
+    --ramp-1: #184f95; --ramp-2: #256abf; --ramp-3: #3987e5; --ramp-4: #6da7ec; --ramp-5: #9ec5f4;
+    --good-text: #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #a3a29b;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+  --series-5: #d55181; --series-6: #0ca30c; --series-7: #9085e9;
+  --ramp-1: #184f95; --ramp-2: #256abf; --ramp-3: #3987e5; --ramp-4: #6da7ec; --ramp-5: #9ec5f4;
+  --good-text: #0ca30c;
+}
+
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.viz-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.viz-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 2px; color: var(--text-primary); }
+.viz-sub { color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 12px; }
+.viz-muted { color: var(--muted); }
+.viz-tile-value { font-size: 1.75rem; font-weight: 600; line-height: 1.1; color: var(--text-primary); }
+.viz-tile-label { color: var(--text-secondary); font-size: 0.8125rem; }
+.viz-input, .viz-button { background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--axis);
+  border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 0.875rem; }
+.viz-button[aria-pressed="true"] { border-color: var(--series-1); box-shadow: inset 0 0 0 1px var(--series-1); font-weight: 600; }
+.viz-button:focus-visible, .viz-input:focus-visible, summary:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+.viz-tooltip { background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--axis);
+  border-radius: 8px; padding: 6px 10px; font-size: 0.8125rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+.viz-legend { list-style: none; margin: 0; padding: 0; font-size: 0.8125rem; }
+.viz-legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; color: var(--text-secondary); }
+.viz-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.viz-legend .viz-legend-value { margin-left: auto; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.viz-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.viz-table th, .viz-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); color: var(--text-primary); }
+.viz-table th { color: var(--text-secondary); font-weight: 600; }
+.viz-table td.num, .viz-table th.num { text-align: right; }
+.viz-badge { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--axis); border-radius: 999px;
+  padding: 1px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.viz-badge-high { border-color: var(--critical); } .viz-badge-high .viz-badge-icon { color: var(--critical); }
+.viz-badge-medium { border-color: var(--warning); } .viz-badge-medium .viz-badge-icon { color: var(--warning); }
+.viz-badge-low .viz-badge-icon { color: var(--neutral-flag); }
+.viz-error { color: var(--text-primary); border: 1px solid var(--critical); border-radius: 8px; padding: 10px 12px; }
+.viz-root .recharts-cartesian-grid line { stroke: var(--grid); }
+.viz-root .recharts-text { fill: var(--text-secondary); }
