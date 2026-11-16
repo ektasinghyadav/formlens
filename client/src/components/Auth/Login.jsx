@@ -34,39 +34,43 @@ export default function Login() {
   const isRegister = mode === 'register';
 
   return (
-    <main className="mx-auto max-w-sm p-6">
-      <h1 className="mb-4 text-2xl font-bold">{isRegister ? 'Create admin account' : 'Admin login'}</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <main className="login">
+      <div className="login-card">
+        <p className="brand">DFUA</p>
+        <h1>{isRegister ? 'Create admin account' : 'Admin login'}</h1>
+        <p className="lede">See which field of your form makes people stop, struggle or leave.</p>
+      <form onSubmit={handleSubmit} className="stack" style={{ marginTop: 28 }}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium">Email</label>
+          <label htmlFor="email" className="label">Email</label>
           <input
             id="email" type="email" required autoComplete="email" value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-400 px-3 py-2"
+            className="input"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium">Password</label>
+          <label htmlFor="password" className="label">Password</label>
           <input
             id="password" type="password" required minLength={8} value={password}
             autoComplete={isRegister ? 'new-password' : 'current-password'}
             aria-describedby={isRegister ? 'password-hint' : undefined}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-400 px-3 py-2"
+            className="input"
           />
-          {isRegister && <p id="password-hint" className="mt-1 text-xs text-gray-600">At least 8 characters.</p>}
+          {isRegister && <p id="password-hint" className="hint">At least 8 characters.</p>}
         </div>
-        {error && <p role="alert" className="text-sm font-medium text-red-700">Error: {error}</p>}
-        <button type="submit" disabled={busy} className="w-full rounded bg-blue-700 px-3 py-2 font-medium text-white disabled:opacity-60">
+        {error && <p role="alert" className="error">Error: {error}</p>}
+        <button type="submit" disabled={busy} className="btn btn-block">
           {busy ? 'Please wait…' : isRegister ? 'Register' : 'Log in'}
         </button>
       </form>
       <button
-        type="button" className="mt-4 text-sm text-blue-800 underline"
+        type="button" className="link" style={{ marginTop: 20, fontSize: '0.9375rem' }}
         onClick={() => { setMode(isRegister ? 'login' : 'register'); setError(''); }}
       >
         {isRegister ? 'Already have an account? Log in' : 'New here? Create an account'}
       </button>
+      </div>
     </main>
   );
 }

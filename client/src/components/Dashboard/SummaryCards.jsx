@@ -9,9 +9,9 @@ export default function SummaryCards({ summary }) {
     ['Completion rate', percentOne(summary.completion_rate)],
   ];
   return (
-    <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Summary">
+    <ul className="viz-stats" aria-label="Summary">
       {tiles.map(([label, value]) => (
-        <li key={label} className="viz-card">
+        <li key={label}>
           <div className="viz-tile-value">{value}</div>
           <div className="viz-tile-label">{label}</div>
         </li>

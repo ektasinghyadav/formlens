@@ -50,10 +50,11 @@ export default function Dashboard() {
 
   return (
     <div className="viz-root">
-      <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+      <main className="dash">
         <div>
-          <Link to="/admin/forms" className="text-sm underline">← Back to your forms</Link>
-          <h1 className="mt-1 text-2xl font-bold">{title ? `${title}: dashboard` : 'Dashboard'}</h1>
+          <Link to="/admin/forms" className="link link-quiet" style={{ fontSize: '0.875rem' }}>← Back to your forms</Link>
+          <p className="kicker" style={{ marginTop: 20 }}>Dashboard</p>
+          <h1>{title || 'Dashboard'}</h1>
         </div>
 
         <DateRangeFilter range={range} onChange={setRange} problem={problem} />
@@ -77,13 +78,15 @@ export default function Dashboard() {
         {state === 'ready' && !problem && data.summary.views > 0 && (
           <>
             <SummaryCards summary={data.summary} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <FunnelPanel funnel={data.funnel} />
-              <AbandonmentDonut funnel={data.funnel} />
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <TimeBarChart fields={data.fields} />
-              <Recommendations items={data.recommendations} />
+            <div className="dash-grid">
+              <div className="dash-col">
+                <FunnelPanel funnel={data.funnel} />
+                <AbandonmentDonut funnel={data.funnel} />
+                <TimeBarChart fields={data.fields} />
+              </div>
+              <div className="dash-col">
+                <Recommendations items={data.recommendations} />
+              </div>
             </div>
             <FieldTable fields={data.fields} />
           </>

@@ -4,14 +4,14 @@
    the funnel ramp was checked as an ordinal ramp). Dark mode uses its own steps, not a flip. */
 .viz-root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface-1: #fcfcfb;
+  --page: #f6f5f1;
+  --surface-1: #fdfdfb;
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
   --muted: #6b6a65;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
+  --grid: #e2e0d6;
+  --axis: #c9c6b8;
+  --border: #e2e0d6;
   --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
   --series-5: #e87ba4; --series-6: #008300; --series-7: #6250d6;
   --other: #898781;
@@ -22,7 +22,7 @@
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) .viz-root {
     color-scheme: dark;
-    --page: #0d0d0d;
+    --page: #121211;
     --surface-1: #1a1a19;
     --text-primary: #f0efec;
     --text-secondary: #c3c2b7;
@@ -38,7 +38,7 @@
 }
 :root[data-theme="dark"] .viz-root {
   color-scheme: dark;
-  --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #a3a29b;
+  --page: #121211; --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #a3a29b;
   --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
   --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
   --series-5: #d55181; --series-6: #0ca30c; --series-7: #9085e9;
@@ -46,13 +46,12 @@
   --good-text: #0ca30c;
 }
 
-.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-.viz-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-.viz-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 2px; color: var(--text-primary); }
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh; }
+.viz-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+.viz-card h2 { font-family: var(--display); font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; color: var(--text-primary); }
 .viz-sub { color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 12px; }
 .viz-muted { color: var(--muted); }
-.viz-tile-value { font-size: 1.75rem; font-weight: 600; line-height: 1.1; color: var(--text-primary); }
+.viz-tile-value { font-family: var(--display); font-size: 2.25rem; font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; color: var(--text-primary); }
 .viz-tile-label { color: var(--text-secondary); font-size: 0.8125rem; }
 .viz-input, .viz-button { background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--axis);
   border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 0.875rem; }
@@ -101,3 +100,25 @@
 .rec-reason { margin: 2px 0 0; font-size: 0.9375rem; color: var(--text-primary); }
 .rec-fix { margin: 2px 0 0; font-size: 0.875rem; color: var(--text-secondary); }
 .rec-fix span { font-weight: 600; }
+
+/* page layout: summary strip, then charts on the left and the advice on the right */
+.dash { max-width: 72rem; margin: 0 auto; padding: 32px 24px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.dash-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+.viz-card { min-width: 0; }
+@media (min-width: 1024px) { .dash-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); } }
+@media (max-width: 640px) { .dash { padding: 24px 16px 56px; } }
+
+/* the four headline numbers are one strip, split by hairlines, not four boxes */
+.viz-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr);
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.viz-stats li { padding: 18px 22px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+@media (min-width: 900px) { .viz-stats { grid-template-columns: repeat(4, 1fr); } .viz-stats li { border-bottom: 0; } .viz-stats li:last-child { border-right: 0; } }
+@media (max-width: 899px) { .viz-stats li:nth-child(2n) { border-right: 0; } .viz-stats li:nth-last-child(-n+2) { border-bottom: 0; } }
+.viz-tile-label { margin-top: 4px; }
+
+/* filter: presets are one connected control */
+.viz-button { transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease; cursor: pointer; }
+.viz-button:hover { background: color-mix(in srgb, var(--text-primary) 6%, var(--surface-1)); }
+.viz-button:active { transform: scale(0.97); }
+.viz-input { color-scheme: inherit; }

@@ -32,8 +32,8 @@ describe('FormList', () => {
   it('shows status as words, and the right actions for each status', async () => {
     formsApi.listForms.mockResolvedValue({ data: forms });
     render(<MemoryRouter><FormList /></MemoryRouter>);
-    const draftRow = (await screen.findByText('Job form')).closest('tr');
-    const pubRow = screen.getByText('Survey').closest('tr');
+    const draftRow = (await screen.findByText('Job form')).closest('li');
+    const pubRow = screen.getByText('Survey').closest('li');
     expect(within(draftRow).getByText('Draft')).toBeTruthy();
     expect(within(draftRow).getByRole('button', { name: 'Publish' })).toBeTruthy();
     expect(within(draftRow).queryByRole('button', { name: 'Copy link' })).toBeNull();
@@ -47,7 +47,7 @@ describe('FormList', () => {
     formsApi.listForms.mockResolvedValue({ data: forms });
     formsApi.publishForm.mockResolvedValue({ data: {} });
     render(<MemoryRouter><FormList /></MemoryRouter>);
-    const row = (await screen.findByText('Job form')).closest('tr');
+    const row = (await screen.findByText('Job form')).closest('li');
     fireEvent.click(within(row).getByRole('button', { name: 'Publish' }));
     await waitFor(() => expect(formsApi.publishForm).toHaveBeenCalledWith('1'));
     await waitFor(() => expect(formsApi.listForms).toHaveBeenCalledTimes(2));

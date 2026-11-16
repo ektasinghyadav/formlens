@@ -1,7 +1,7 @@
 // ProtectedRoute.jsx - the bouncer for admin pages. Requirements: FR-8.1, NFR-3.1.
 // Not logged in -> redirect to /login. Logged in -> show a small top bar + the page.
 // NOTE: this only hides pages. The real protection is the server's 401 (middleware/auth.js).
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext.jsx';
 
 export default function ProtectedRoute() {
@@ -15,11 +15,17 @@ export default function ProtectedRoute() {
 
   return (
     <>
-      <header className="flex items-center justify-between bg-gray-100 px-6 py-3">
-        <span className="text-sm text-gray-700">Signed in as {admin.email}</span>
-        <button type="button" onClick={logout} className="rounded border border-gray-400 px-3 py-1 text-sm">
-          Log out
-        </button>
+      <header className="bar">
+        <div className="bar-inner">
+          <Link to="/admin/forms" className="brand">DFUA</Link>
+          <nav className="bar-nav" aria-label="Main">
+            <Link to="/admin/forms" className="link link-quiet">Forms</Link>
+          </nav>
+          <div className="bar-user">
+            <span>Signed in as {admin.email}</span>
+            <button type="button" onClick={logout} className="btn btn-quiet btn-small">Log out</button>
+          </div>
+        </div>
       </header>
       <Outlet />
     </>

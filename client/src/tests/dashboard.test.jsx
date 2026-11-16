@@ -55,7 +55,7 @@ describe('showing the data (FR-6.1)', () => {
   it('shows the title, the four summary tiles, every chart, the field table and the recommendations', async () => {
     mockData();
     open();
-    expect(await screen.findByRole('heading', { name: 'Job Application: dashboard' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Job Application' })).toBeTruthy();
     const tiles = within(screen.getByRole('list', { name: 'Summary' }));
     expect(tiles.getByText('120')).toBeTruthy();
     expect(tiles.getByText('60')).toBeTruthy();
@@ -212,8 +212,8 @@ describe('responsive layout (NFR-4.2 / usable on a narrow window)', () => {
     mockData();
     const { container } = open();
     await screen.findByRole('region', { name: 'Completion funnel' });
-    expect(container.querySelectorAll('.lg\\:grid-cols-2').length).toBe(2);
-    expect(container.querySelector('.grid-cols-2.lg\\:grid-cols-4')).not.toBeNull(); // summary tiles: 2 across, then 4
+    expect(container.querySelectorAll('.dash-grid > .dash-col').length).toBe(2); // charts column + advice column (CSS makes them 2 across when wide)
+    expect(container.querySelector('.viz-stats')).not.toBeNull(); // summary strip: 2 across, then 4 (CSS)
     expect(container.querySelector('.overflow-x-auto table')).not.toBeNull();
   });
 });

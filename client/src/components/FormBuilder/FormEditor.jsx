@@ -99,17 +99,17 @@ export default function FormEditor() {
   if (loading) return <p className="p-6">Loading…</p>;
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <Link to="/admin/forms" className="text-sm text-blue-800 underline">← Back to your forms</Link>
-      <h1 className="mb-4 mt-2 text-2xl font-bold">{isNew ? 'New form' : 'Edit form'}</h1>
+    <main className="page-narrow">
+      <Link to="/admin/forms" className="link link-quiet" style={{ fontSize: '0.875rem' }}>← Back to your forms</Link>
+      <h1 style={{ margin: '12px 0 28px' }}>{isNew ? 'New form' : 'Edit form'}</h1>
 
-      <label htmlFor="form-title" className="block text-sm font-medium">Form title</label>
+      <label htmlFor="form-title" className="label">Form title</label>
       <input id="form-title" value={title} onChange={(e) => setTitle(e.target.value)}
-        className="mb-6 mt-1 w-full rounded border border-gray-400 px-3 py-2" />
+        className="input" style={{ marginBottom: 36 }} />
 
-      <h2 className="mb-2 text-lg font-semibold">Fields</h2>
-      {fields.length === 0 && <p className="mb-2 text-gray-600">No fields yet. Add one below.</p>}
-      <ul className="mb-4 space-y-3">
+      <h2 style={{ fontSize: '1.25rem', marginBottom: 14 }}>Fields</h2>
+      {fields.length === 0 && <p className="hint" style={{ marginBottom: 12 }}>No fields yet. Add one below.</p>}
+      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: '0 0 20px' }}>
         {fields.map((f, i) => (
           <FieldEditor key={f.key} field={f} index={i} total={fields.length} drag={drag}
             onChange={(patch) => changeField(f.key, patch)}
@@ -118,39 +118,39 @@ export default function FormEditor() {
         ))}
       </ul>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium">Add a field:</span>
+      <div className="add-row">
+        <span className="label" style={{ margin: 0, marginRight: 4 }}>Add a field:</span>
         {FIELD_TYPES.map((t) => (
           <button key={t.type} type="button" onClick={() => setFields((fs) => [...fs, newField(t.type)])}
-            className="rounded border border-gray-400 px-3 py-1 text-sm">+ {t.name}</button>
+            className="btn btn-quiet btn-small">+ {t.name}</button>
         ))}
       </div>
 
-      {error && <p role="alert" className="mb-3 font-medium text-red-700">Error: {error}</p>}
-      {notice && <p role="status" className="mb-3 font-medium text-green-800">{notice}</p>}
+      {error && <p role="alert" className="error" style={{ marginTop: 20 }}>Error: {error}</p>}
+      {notice && <p role="status" className="notice" style={{ marginTop: 20 }}>{notice}</p>}
 
-      <div className="flex flex-wrap gap-3">
-        <button type="button" onClick={saveDraft} disabled={busy} className="rounded border border-gray-500 px-4 py-2 disabled:opacity-60">
+      <div className="actions">
+        <button type="button" onClick={saveDraft} disabled={busy} className="btn btn-quiet">
           {status === 'published' ? 'Save changes' : 'Save draft'}
         </button>
         {status !== 'published' && (
-          <button type="button" onClick={publish} disabled={busy} className="rounded bg-blue-700 px-4 py-2 font-medium text-white disabled:opacity-60">
+          <button type="button" onClick={publish} disabled={busy} className="btn">
             Publish
           </button>
         )}
         {status === 'published' && (
-          <button type="button" onClick={unpublish} disabled={busy} className="rounded border border-red-700 px-4 py-2 text-red-800 disabled:opacity-60">
+          <button type="button" onClick={unpublish} disabled={busy} className="btn btn-danger">
             Unpublish
           </button>
         )}
       </div>
 
       {status === 'published' && shareUrl && (
-        <section className="mt-6 rounded border border-green-700 bg-green-50 p-4">
-          <label htmlFor="share-url" className="block text-sm font-medium">Share this link with respondents</label>
-          <div className="mt-1 flex gap-2">
-            <input id="share-url" readOnly value={shareUrl} className="w-full rounded border border-gray-400 bg-white px-3 py-2" />
-            <button type="button" onClick={copyLink} className="rounded border border-gray-500 px-3 py-2">Copy link</button>
+        <section className="share">
+          <label htmlFor="share-url" className="label">Share this link with respondents</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input id="share-url" readOnly value={shareUrl} className="input" />
+            <button type="button" onClick={copyLink} className="btn btn-quiet" style={{ whiteSpace: 'nowrap' }}>Copy link</button>
           </div>
         </section>
       )}

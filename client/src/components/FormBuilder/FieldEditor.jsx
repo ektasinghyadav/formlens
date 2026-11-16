@@ -13,37 +13,40 @@ export default function FieldEditor({ field, index, total, onChange, onMove, onD
       onDragStart={() => drag.start(index)}
       onDragOver={(e) => e.preventDefault()} // needed, otherwise the browser refuses drops
       onDrop={() => drag.drop(index)}
-      className="rounded border border-gray-300 bg-white p-4"
+      className="field-card"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">
-          <span aria-hidden="true" className="mr-2 cursor-grab">⠿</span>
-          {index + 1}. {typeName}
+      <div className="field-top">
+        <span className="field-kind">
+          <span aria-hidden="true" className="grip">⠿</span>
+          <span className="field-num" aria-hidden="true">{index + 1}</span>
+          <span className="sr-only">{index + 1}. </span>{typeName}
         </span>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: 6 }}>
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}
-            aria-label={`Move field ${index + 1} up`} className="rounded border px-2 disabled:opacity-40">▲</button>
+            aria-label={`Move field ${index + 1} up`} className="icon-btn">▲</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}
-            aria-label={`Move field ${index + 1} down`} className="rounded border px-2 disabled:opacity-40">▼</button>
+            aria-label={`Move field ${index + 1} down`} className="icon-btn">▼</button>
           <button type="button" onClick={onDelete}
-            aria-label={`Delete field ${index + 1}`} className="rounded border border-red-700 px-2 text-red-800">Delete</button>
+            aria-label={`Delete field ${index + 1}`} className="btn btn-danger btn-small">Delete</button>
         </div>
       </div>
 
-      <label htmlFor={id('label')} className="block text-sm font-medium">Question shown to the respondent</label>
-      <input id={id('label')} value={field.label} onChange={(e) => onChange({ label: e.target.value })}
-        className="mb-3 mt-1 w-full rounded border border-gray-400 px-3 py-2" />
+      <div className="stack">
+        <div>
+          <label htmlFor={id('label')} className="label">Question shown to the respondent</label>
+          <input id={id('label')} value={field.label} onChange={(e) => onChange({ label: e.target.value })} className="input" />
+        </div>
 
-      <label className="mb-3 flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={field.is_required} onChange={(e) => onChange({ is_required: e.target.checked })} />
-        Required (must be filled in)
-      </label>
+        <label className="check">
+          <input type="checkbox" checked={field.is_required} onChange={(e) => onChange({ is_required: e.target.checked })} />
+          Required (must be filled in)
+        </label>
 
       {field.field_type === 'text' && (
         <div>
-          <label htmlFor={id('format')} className="block text-sm font-medium">Check the answer looks like</label>
+          <label htmlFor={id('format')} className="label">Check the answer looks like</label>
           <select id={id('format')} value={field.format} onChange={(e) => onChange({ format: e.target.value })}
-            className="mt-1 rounded border border-gray-400 px-3 py-2">
+            className="select">
             <option value="">Anything</option>
             <option value="email">An email address</option>
             <option value="number">A number</option>
@@ -51,25 +54,26 @@ export default function FieldEditor({ field, index, total, onChange, onMove, onD
         </div>
       )}
       {(field.field_type === 'email' || field.field_type === 'number') && (
-        <p className="text-sm text-gray-600">
+        <p className="hint" style={{ margin: 0 }}>
           The answer is automatically checked to be {field.field_type === 'email' ? 'an email address' : 'a number'}.
         </p>
       )}
       {field.field_type === 'dropdown' && (
         <div>
-          <label htmlFor={id('options')} className="block text-sm font-medium">Choices (one per line, at least 2)</label>
+          <label htmlFor={id('options')} className="label">Choices (one per line, at least 2)</label>
           <textarea id={id('options')} rows={4} value={field.optionsText} onChange={(e) => onChange({ optionsText: e.target.value })}
-            className="mt-1 w-full rounded border border-gray-400 px-3 py-2" />
+            className="textarea" />
         </div>
       )}
       {field.field_type === 'file' && (
         <div>
-          <label htmlFor={id('size')} className="block text-sm font-medium">Largest file allowed (MB)</label>
+          <label htmlFor={id('size')} className="label">Largest file allowed (MB)</label>
           <input id={id('size')} type="number" min="1" max="25" value={field.maxFileSizeMB}
             onChange={(e) => onChange({ maxFileSizeMB: e.target.value })}
-            className="mt-1 w-24 rounded border border-gray-400 px-3 py-2" />
+            className="input" style={{ width: 96 }} />
         </div>
       )}
+      </div>
     </li>
   );
 }

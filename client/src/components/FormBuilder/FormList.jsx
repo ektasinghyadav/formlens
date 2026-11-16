@@ -42,47 +42,47 @@ export default function FormList() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Your forms</h1>
-        <Link to="/admin/forms/new/edit" className="rounded bg-blue-700 px-4 py-2 font-medium text-white">New form</Link>
+    <main className="page">
+      <div className="page-head">
+        <div>
+          <p className="kicker">Your workspace</p>
+          <h1>Your forms</h1>
+        </div>
+        <Link to="/admin/forms/new/edit" className="btn">New form</Link>
       </div>
 
-      {error && <p role="alert" className="mb-3 font-medium text-red-700">Error: {error}</p>}
-      {notice && <p role="status" className="mb-3 font-medium text-green-800">{notice}</p>}
-      {forms === null && <p>Loading…</p>}
-      {forms && forms.length === 0 && !error && <p className="text-gray-600">You have no forms yet. Click "New form" to make one.</p>}
+      {error && <p role="alert" className="error" style={{ marginBottom: 12 }}>Error: {error}</p>}
+      {notice && <p role="status" className="notice" style={{ marginBottom: 12 }}>{notice}</p>}
+      {forms === null && <p className="hint">Loading…</p>}
+      {forms && forms.length === 0 && !error && <p className="lede">You have no forms yet. Click "New form" to make one.</p>}
 
       {forms && forms.length > 0 && (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="py-2">Title</th><th>Status</th><th>Created</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {forms.map((f) => (
-              <tr key={f.form_id} className="border-b align-top">
-                <td className="py-2 font-medium">{f.title}</td>
-                <td>{STATUS_TEXT[f.status]}</td>
-                <td>{new Date(f.created_at).toLocaleDateString()}</td>
-                <td className="flex flex-wrap gap-2 py-2">
-                  <Link to={`/admin/forms/${f.form_id}/edit`} className="text-blue-800 underline">Edit</Link>
-                  {f.status !== 'published' && (
-                    <button type="button" onClick={() => change(publishForm, f.form_id)} className="text-blue-800 underline">Publish</button>
-                  )}
-                  {f.status === 'published' && (
-                    <>
-                      <button type="button" onClick={() => change(unpublishForm, f.form_id)} className="text-blue-800 underline">Unpublish</button>
-                      <button type="button" onClick={() => copy(f.share_url)} className="text-blue-800 underline">Copy link</button>
-                    </>
-                  )}
-                  <Link to={`/admin/forms/${f.form_id}/dashboard`} className="text-blue-800 underline">Dashboard</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="rows">
+          {forms.map((f) => (
+            <li key={f.form_id} className="row">
+              <div>
+                <h2 className="row-title">{f.title}</h2>
+                <div className="row-meta">
+                  <span className={`status status-${f.status}`}>{STATUS_TEXT[f.status]}</span>
+                  <span>Created {new Date(f.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div className="row-actions">
+                <Link to={`/admin/forms/${f.form_id}/edit`} className="link">Edit</Link>
+                {f.status !== 'published' && (
+                  <button type="button" onClick={() => change(publishForm, f.form_id)} className="link">Publish</button>
+                )}
+                {f.status === 'published' && (
+                  <>
+                    <button type="button" onClick={() => copy(f.share_url)} className="link">Copy link</button>
+                    <button type="button" onClick={() => change(unpublishForm, f.form_id)} className="link link-danger">Unpublish</button>
+                  </>
+                )}
+                <Link to={`/admin/forms/${f.form_id}/dashboard`} className="btn btn-quiet btn-small">Dashboard</Link>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </main>
   );

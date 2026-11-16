@@ -109,39 +109,39 @@ export default function FormFill() {
     }
   }
 
-  if (state === 'loading') return <main className="p-6"><p>Loading…</p></main>;
+  if (state === 'loading') return <main className="fill"><p className="hint">Loading…</p></main>;
   if (state === 'unavailable') {
     return (
-      <main className="mx-auto max-w-xl p-6">
-        <h1 className="text-2xl font-bold">This form is not available</h1>
-        <p className="mt-2 text-gray-700">The link may be wrong, or the form is no longer open.</p>
+      <main className="fill">
+        <h1>This form is not available</h1>
+        <p className="lede">The link may be wrong, or the form is no longer open.</p>
       </main>
     );
   }
   if (state === 'error') {
-    return <main className="mx-auto max-w-xl p-6"><p role="alert">Error: the form could not be loaded. Please try again later.</p></main>;
+    return <main className="fill"><p role="alert" className="error">Error: the form could not be loaded. Please try again later.</p></main>;
   }
   if (state === 'done') {
     return (
-      <main className="mx-auto max-w-xl p-6">
-        <h1 className="text-2xl font-bold">Thank you</h1>
-        <p role="status" className="mt-2 text-gray-700">Your response was submitted.</p>
+      <main className="fill">
+        <h1>Thank you</h1>
+        <p role="status" className="lede">Your response was submitted.</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-xl p-4 sm:p-6">
-      <h1 className="mb-4 text-2xl font-bold">{form.title}</h1>
+    <main className="fill">
+      <h1>{form.title}</h1>
 
       {/* NFR-7.1: the person is told, in plain words, that interactions are recorded. */}
-      <section aria-label="Privacy notice" className="mb-6 rounded border border-blue-700 bg-blue-50 p-3 text-sm">
+      <section aria-label="Privacy notice" className="note">
         <strong>Privacy notice:</strong> this form records how you use it, such as which fields you click,
         how long you spend on each, and where you stop. It does not record what you type while you fill it in.
         Your answers are saved only when you press Submit.
       </section>
 
-      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-5">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="stack">
         {form.fields.map((f) => {
           const id = `field-${f.field_id}`;
           const errId = `${id}-error`;
@@ -151,12 +151,12 @@ export default function FormFill() {
             'data-field-id': f.field_id, // how the tracker knows which field an event belongs to
             'aria-invalid': error ? 'true' : undefined,
             'aria-describedby': error ? errId : undefined,
-            className: 'mt-1 w-full rounded border border-gray-500 px-3 py-2',
+            className: f.field_type === 'dropdown' ? 'select' : 'input',
           };
           return (
             <div key={f.field_id}>
-              <label htmlFor={id} className="block font-medium">
-                {f.label} {f.is_required && <span className="font-normal text-gray-700">(required)</span>}
+              <label htmlFor={id} className="q-label">
+                <span>{f.label}</span> {f.is_required && <span className="q-req">(required)</span>}
               </label>
 
               {f.field_type === 'dropdown' ? (
@@ -176,13 +176,13 @@ export default function FormFill() {
                   onChange={(e) => onChange(f, e.target.value)} onBlur={() => check(f, values[f.field_id], undefined)} />
               )}
 
-              {error && <p id={errId} role="alert" className="mt-1 text-sm font-medium text-red-700">Error: {error}</p>}
+              {error && <p id={errId} role="alert" className="error" style={{ marginTop: 6 }}>Error: {error}</p>}
             </div>
           );
         })}
 
-        {formError && <p role="alert" className="font-medium text-red-700">Error: {formError}</p>}
-        <button type="submit" disabled={busy} className="w-full rounded bg-blue-700 px-4 py-3 font-medium text-white disabled:opacity-60">
+        {formError && <p role="alert" className="error">Error: {formError}</p>}
+        <button type="submit" disabled={busy} className="btn btn-block" style={{ minHeight: 48 }}>
           {busy ? 'Submitting…' : 'Submit'}
         </button>
       </form>
