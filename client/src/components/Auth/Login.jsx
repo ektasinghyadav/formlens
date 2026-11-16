@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext.jsx';
+import Brand from '../Brand.jsx';
 import { register } from '../../api/auth.js';
 
 export default function Login() {
@@ -36,9 +37,10 @@ export default function Login() {
   return (
     <main className="login">
       <div className="login-card">
-        <p className="brand">FormLens</p>
-        <h1>{isRegister ? 'Create admin account' : 'Admin login'}</h1>
-        <p className="lede">Digital Form Usability Analyzer. See which field of your form makes people stop, struggle or leave.</p>
+        <p className="brand" aria-label="FormLens"><Brand size="hero" /></p>
+        <p className="tagline">Digital Form Usability Analyzer</p>
+        <h1 className="login-title">{isRegister ? 'Create admin account' : 'Admin login'}</h1>
+        <p className="lede">See which field of your form makes people stop, struggle or leave.</p>
       <form onSubmit={handleSubmit} className="stack" style={{ marginTop: 28 }}>
         <div>
           <label htmlFor="email" className="label">Email</label>

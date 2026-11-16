@@ -36,7 +36,14 @@ h1 { font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem); margin: 0; }
 /* ---- app shell (top bar for logged-in pages) ---- */
 .bar { border-bottom: 1px solid var(--line); background: var(--paper); }
 .bar-inner { display: flex; align-items: center; gap: 24px; max-width: 72rem; margin: 0 auto; padding: 14px 24px; }
-.brand { font-family: var(--display); font-weight: 700; font-size: 1.125rem; letter-spacing: 0.01em; color: var(--ink); text-decoration: none; }
+.brand { color: var(--ink); text-decoration: none; display: inline-flex; }
+.brand-mark { display: inline-flex; align-items: center; gap: 0.4em; font-family: var(--display); line-height: 1; }
+.brand-name { font-weight: 500; letter-spacing: -0.02em; }
+.brand-name b { font-weight: 800; }
+.brand-bar { font-size: 1.5rem; }
+.brand-bar svg { width: 0.95em; height: 0.95em; }
+.brand-hero { font-size: 3rem; }
+.tagline { margin: 12px 0 0; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .bar-nav { display: flex; gap: 18px; font-size: 0.9375rem; }
 .bar-user { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 0.875rem; color: var(--ink-3); }
 
@@ -129,5 +136,7 @@ h1 { font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem); margin: 0; }
 /* ---- login ---- */
 .login { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
 .login-card { width: 100%; max-width: 26rem; }
-.login-card .brand { display: block; margin: 0 0 40px; }
+.login-card .brand { display: flex; margin: 0; }
+.login-title { font-family: var(--display); font-size: 1.5rem; margin: 40px 0 0; }
+.login-card .lede { margin-top: 6px; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
