@@ -46,6 +46,21 @@ describe('seedDemo', () => {
     expect(m).toBe(1);
   });
 
+  it('adds the extra demo forms on request: three published with visits, one draft with none; reset removes them all', async () => {
+    const r = await seedDemo(pool, { sessions: 20, seed: 7, now: NOW, email, reset: true, extras: true, extraScale: 0.02 });
+    expect(r.others.map((o) => o.title)).toEqual(['Demo: Event Registration', 'Demo: Customer Feedback', 'Demo: Scholarship Application', 'Demo: Newsletter Signup']);
+    const [forms] = await pool.query('SELECT title, status FROM forms WHERE admin_id = ? ORDER BY title', [r.adminId]);
+    expect(forms.map((f) => `${f.title} (${f.status})`)).toEqual([
+      'Demo: Customer Feedback (published)', 'Demo: Event Registration (published)', 'Demo: Job Application (published)',
+      'Demo: Newsletter Signup (draft)', 'Demo: Scholarship Application (published)']);
+    const draft = r.others.find((o) => o.title === 'Demo: Newsletter Signup');
+    const [[{ n }]] = await pool.query('SELECT COUNT(*) n FROM sessions WHERE form_id = ?', [draft.formId]);
+    expect(n).toBe(0);
+    await seedDemo(pool, { sessions: 5, seed: 7, now: NOW, email, reset: true }); // no extras this time
+    const [after] = await pool.query('SELECT title FROM forms WHERE admin_id = ?', [r.adminId]);
+    expect(after.map((f) => f.title)).toEqual(['Demo: Job Application']);
+  });
+
   it('stores times in order inside each session, and never any typed text', async () => {
     const r = await seedDemo(pool, { sessions: 40, seed: 3, now: NOW, email, reset: true });
     const [[{ bad }]] = await pool.query(
