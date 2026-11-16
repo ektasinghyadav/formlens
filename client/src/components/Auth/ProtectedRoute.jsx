@@ -17,7 +17,7 @@ export default function ProtectedRoute() {
     <>
       <header className="bar">
         <div className="bar-inner">
-          <Link to="/admin/forms" className="brand">DFUA</Link>
+          <Link to="/admin/forms" className="brand">FormLens</Link>
           <nav className="bar-nav" aria-label="Main">
             <Link to="/admin/forms" className="link link-quiet">Forms</Link>
           </nav>

@@ -1,4 +1,4 @@
-# DFUA - Digital Form Usability Analyzer
+# FormLens - Digital Form Usability Analyzer (project code name: DFUA)
 
 An admin builds and publishes a form. While respondents fill it in, their interactions
 (which field they focused, how long, errors, where they quit) are recorded - never what
