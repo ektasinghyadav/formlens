@@ -81,3 +81,23 @@
 .viz-error { color: var(--text-primary); border: 1px solid var(--critical); border-radius: 8px; padding: 10px 12px; }
 .viz-root .recharts-cartesian-grid line { stroke: var(--grid); }
 .viz-root .recharts-text { fill: var(--text-secondary); }
+
+/* Recommendations: one card per field, grouped problems inside */
+.rec-summary { margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+.rec-key { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.8125rem; color: var(--text-secondary); }
+.rec-key li { display: flex; align-items: center; gap: 6px; }
+.rec-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.rec-card { border: 1px solid var(--grid); border-left: 4px solid var(--axis); border-radius: 8px; padding: 12px 14px; }
+.rec-card-high { border-left-color: var(--critical); }
+.rec-card-medium { border-left-color: var(--warning); }
+.rec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.rec-field { font-size: 1rem; color: var(--text-primary); }
+.rec-issues { list-style: none; margin: 0; padding: 0; }
+.rec-issue { padding: 8px 0; border-top: 1px solid var(--grid); }
+.rec-issue:first-child { border-top: 0; padding-top: 2px; }
+.rec-issue-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+.rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--muted); }
+.rec-dot-high { background: var(--critical); } .rec-dot-medium { background: var(--warning); }
+.rec-reason { margin: 2px 0 0; font-size: 0.9375rem; color: var(--text-primary); }
+.rec-fix { margin: 2px 0 0; font-size: 0.875rem; color: var(--text-secondary); }
+.rec-fix span { font-weight: 600; }

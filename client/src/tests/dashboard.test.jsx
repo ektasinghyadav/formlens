@@ -30,9 +30,9 @@ const fields = [
 ];
 const summary = { views: 120, completions: 60, abandonments: 45, completion_rate: 0.5 };
 const recs = [
-  { priority: 'high', field_id: 'c', label: 'Resume Upload', reason: '43% of the sessions that reached "Resume Upload" left the form there.', suggestion: 'Simplify this field.' },
-  { priority: 'medium', field_id: 'c', label: 'Resume Upload', reason: '39% hit a validation error.', suggestion: 'Clarify the label.' },
-  { priority: 'low', field_id: 'b', label: 'Email', reason: '12% hit a validation error.', suggestion: 'Add an example.' },
+  { rule: 'abandonment', priority: 'high', field_id: 'c', label: 'Resume Upload', reason: '43% of the sessions that reached "Resume Upload" left the form there.', suggestion: 'Simplify this field.' },
+  { rule: 'error', priority: 'medium', field_id: 'c', label: 'Resume Upload', reason: '39% hit a validation error.', suggestion: 'Clarify the label.' },
+  { rule: 'error', priority: 'low', field_id: 'b', label: 'Email', reason: '12% hit a validation error.', suggestion: 'Add an example.' },
 ];
 
 function mockData(over = {}) {
@@ -88,14 +88,17 @@ describe('showing the data (FR-6.1)', () => {
     expect(donutRegion.getByRole('list', { name: 'Legend' }).textContent).toContain('30 · 67%'); // 30 of the 45 who left
   });
 
-  it('shows priorities as a word with an icon, High first, never colour alone (FR-7.2)', async () => {
+  it('groups the advice one card per field, worst first, with a word + icon priority (FR-7.2)', async () => {
     mockData();
     open();
     const panel = within(await screen.findByRole('region', { name: 'Recommendations' }));
-    const items = panel.getAllByRole('listitem');
-    expect(items.map((li) => li.textContent.match(/High|Medium|Low/)[0])).toEqual(['High', 'Medium', 'Low']);
+    expect(panel.getByText(/2 fields need attention: 1 high · 1 low/)).toBeTruthy();
+    const cards = panel.getAllByRole('listitem').filter((li) => li.className.includes('rec-card'));
+    expect(cards.map((c) => c.querySelector('.rec-field').textContent)).toEqual(['Resume Upload', 'Email']); // Resume Upload has two problems but one card
+    expect(cards.map((c) => c.querySelector('.viz-badge').textContent)).toEqual(['▲High', '▽Low']); // card badge = worst problem
     expect(panel.getByText('43% of the sessions that reached "Resume Upload" left the form there.')).toBeTruthy();
-    expect(panel.getByText('Suggestion: Simplify this field.')).toBeTruthy();
+    expect(panel.getByText('Simplify this field.')).toBeTruthy();
+    expect(panel.getByText('People quit here')).toBeTruthy();
   });
 });
 

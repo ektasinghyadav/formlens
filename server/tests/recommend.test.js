@@ -36,10 +36,10 @@ const url = (query = '') => `/analytics/${fx.formId}/recommendations${query}`;
 const stored = async () => (await pool.query('SELECT priority, reason FROM recommendations WHERE form_id = ? ORDER BY FIELD(priority, "high", "medium", "low"), reason', [fx.formId]))[0];
 
 const EXPECTED = (fieldIds) => [
-  { priority: 'high', field_id: fieldIds[1], label: 'F1', reason: '50% of the sessions that reached "F1" left the form there.', suggestion: 'Simplify this field, make it optional, or reduce the effort it asks for.' },
-  { priority: 'high', field_id: fieldIds[1], label: 'F1', reason: '50% of the sessions that reached "F1" hit a validation error.', suggestion: 'Clarify the label, add an example or placeholder, or relax or explain the validation rule.' },
-  { priority: 'medium', field_id: fieldIds[1], label: 'F1', reason: '25% of the sessions that reached "F1" had to correct their answer.', suggestion: 'Add input hints or format masks so people get it right the first time.' },
-  { priority: 'low', field_id: fieldIds[2], label: 'F2', reason: 'Only 3 sessions reached "F2" so far.', suggestion: 'Share the form with more people; at least 5 sessions are needed before this field can be assessed.' },
+  { rule: 'abandonment', priority: 'high', field_id: fieldIds[1], label: 'F1', reason: '50% of the sessions that reached "F1" left the form there.', suggestion: 'Simplify this field, make it optional, or reduce the effort it asks for.' },
+  { rule: 'error', priority: 'high', field_id: fieldIds[1], label: 'F1', reason: '50% of the sessions that reached "F1" hit a validation error.', suggestion: 'Clarify the label, add an example or placeholder, or relax or explain the validation rule.' },
+  { rule: 'correction', priority: 'medium', field_id: fieldIds[1], label: 'F1', reason: '25% of the sessions that reached "F1" had to correct their answer.', suggestion: 'Add input hints or format masks so people get it right the first time.' },
+  { rule: 'not_enough_data', priority: 'low', field_id: fieldIds[2], label: 'F2', reason: 'Only 3 sessions reached "F2" so far.', suggestion: 'Share the form with more people; at least 5 sessions are needed before this field can be assessed.' },
 ];
 
 beforeAll(async () => {
@@ -95,10 +95,10 @@ describe('GET /analytics/:formId/recommendations (FR-7.2, FR-8.1, FR-8.2)', () =
     expect((await api(`/analytics/${randomUUID()}/recommendations`, tokenA)).status).toBe(404);
   });
 
-  it('returns exactly {priority, field_id, label, reason, suggestion}, sorted High to Low, and saves them', async () => {
+  it('returns exactly {rule, priority, field_id, label, reason, suggestion}, sorted High to Low, and saves them', async () => {
     const res = await api(url(`?from=${monthAgo()}`), tokenA);
     expect(res.status).toBe(200);
-    for (const r of res.body) expect(Object.keys(r).sort()).toEqual(['field_id', 'label', 'priority', 'reason', 'suggestion']);
+    for (const r of res.body) expect(Object.keys(r).sort()).toEqual(['field_id', 'label', 'priority', 'reason', 'rule', 'suggestion']);
     expect(res.body).toEqual(EXPECTED(fx.fieldIds));
     const rank = { high: 0, medium: 1, low: 2 };
     const ranks = res.body.map((r) => rank[r.priority]);

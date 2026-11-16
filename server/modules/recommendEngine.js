@@ -84,11 +84,12 @@ export function flagFields({ funnel, fields }, thresholds = defaultThresholds) {
 }
 
 // Reads the numbers for a form and date range from the analytics engine, applies the rules.
-// Returns [{ priority, field_id, label, reason, suggestion }], High first.
+// Returns [{ rule, priority, field_id, label, reason, suggestion }], High first. `rule` lets the
+// dashboard show a plain-English issue name (Drop-off, Slow, Errors...).
 export async function buildRecommendations(db, formId, { from = null, to = null, now = new Date(), thresholds = defaultThresholds } = {}) {
   const range = { from, to, now };
   const [funnel, fields] = await Promise.all([getFunnel(db, formId, range), getFieldMetrics(db, formId, range)]);
-  return flagFields({ funnel, fields }, thresholds).map(({ rule, ...rec }) => rec);
+  return flagFields({ funnel, fields }, thresholds);
 }
 
 // D-12: the saved list for a form is always the result of the latest run. Delete the old
