@@ -64,9 +64,14 @@
 .viz-legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; color: var(--text-secondary); }
 .viz-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 .viz-legend .viz-legend-value { margin-left: auto; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.viz-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
-.viz-table th, .viz-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); color: var(--text-primary); }
-.viz-table th { color: var(--text-secondary); font-weight: 600; }
+.viz-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--grid); border-radius: 8px; overflow: hidden; }
+.viz-table th, .viz-table td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--grid); color: var(--text-primary); white-space: nowrap; }
+.viz-table thead th { background: color-mix(in srgb, var(--grid) 45%, var(--surface-1)); color: var(--text-secondary);
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid var(--axis); }
+.viz-table tbody th { font-weight: 600; color: var(--text-primary); }
+.viz-table tbody tr:last-child th, .viz-table tbody tr:last-child td { border-bottom: 0; }
+.viz-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--grid) 22%, var(--surface-1)); }
 .viz-table td.num, .viz-table th.num { text-align: right; }
 .viz-badge { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--axis); border-radius: 999px;
   padding: 1px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
