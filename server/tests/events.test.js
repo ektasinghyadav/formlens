@@ -75,10 +75,12 @@ describe('accepting events (FR-3.1-3.4)', () => {
 
   it('keeps millisecond precision on timestamps and stores them in UTC', async () => {
     const sid = await newSession();
-    await post([ev(sid, { timestamp: '2026-11-16T10:20:30.123Z'.replace('2026-11-16', new Date().toISOString().slice(0, 10)) })]);
+    // one minute ago (never in the future, whatever time the test runs) with a fixed .123 ms part
+    const sent = new Date(Math.floor((Date.now() - 60000) / 1000) * 1000 + 123).toISOString();
+    await post([ev(sid, { timestamp: sent })]);
     await waitForRows(sid, 1);
     const [[row]] = await pool.query('SELECT timestamp FROM events WHERE session_id = ?', [sid]);
-    expect(row.timestamp.toISOString().slice(11)).toBe('10:20:30.123Z');
+    expect(row.timestamp.toISOString()).toBe(sent);
     const [[clock]] = await pool.query("SELECT @@session.time_zone tz, NOW() now");
     expect(clock.tz).toBe('+00:00');
     expect(Math.abs(clock.now.getTime() - Date.now())).toBeLessThan(5000);
