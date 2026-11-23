@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext.jsx';
 import Brand from '../Brand.jsx';
+import ThemeToggle from '../ThemeToggle.jsx';
 import { register } from '../../api/auth.js';
 
 export default function Login() {
@@ -36,6 +37,7 @@ export default function Login() {
 
   return (
     <main className="login">
+      <div className="corner"><ThemeToggle /></div>
       <div className="login-card">
         <p className="brand" aria-label="FormLens"><Brand size="hero" /></p>
         <p className="tagline">Digital Form Usability Analyzer</p>

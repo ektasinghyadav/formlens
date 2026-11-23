@@ -3,6 +3,7 @@
 // NOTE: this only hides pages. The real protection is the server's 401 (middleware/auth.js).
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import Brand from '../Brand.jsx';
+import ThemeToggle from '../ThemeToggle.jsx';
 import { useAuth } from './AuthContext.jsx';
 
 export default function ProtectedRoute() {
@@ -23,6 +24,7 @@ export default function ProtectedRoute() {
             <Link to="/admin/forms" className="link link-quiet">Forms</Link>
           </nav>
           <div className="bar-user">
+            <ThemeToggle />
             <span>Signed in as {admin.email}</span>
             <button type="button" onClick={logout} className="btn btn-quiet btn-small">Log out</button>
           </div>

@@ -169,8 +169,8 @@ describe('keyboard-only use (NFR-4.2)', () => {
   it('uses native controls only: every control is labelled and none is removed from the tab order', async () => {
     open();
     await screen.findByRole('heading', { name: 'Job application' });
-    const controls = document.querySelectorAll('input, select, button');
-    expect(controls.length).toBe(5); // 4 fields + Submit
+    const controls = document.querySelectorAll('form input, form select, form button');
+    expect(controls.length).toBe(5); // 4 fields + Submit (the light/dark toggle sits outside the form)
     for (const c of controls) expect(c.getAttribute('tabindex')).toBeNull(); // default order = top to bottom
     expect(document.querySelector('form').getAttribute('onclick')).toBeNull();
     // the form is a real <form> with a submit button, so Enter / Space on the button submits it

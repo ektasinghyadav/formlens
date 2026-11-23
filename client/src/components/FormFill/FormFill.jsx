@@ -8,6 +8,7 @@ import { Link, useParams } from 'react-router-dom';
 import { createSession, getForm, getPublicForm, submitForm, uploadFile } from '../../api/forms.js';
 import { createTracker } from '../../tracker/eventTracker.js';
 import { validateAnswer } from './validate.js';
+import ThemeToggle from '../ThemeToggle.jsx';
 
 // preview = the admin's "View form" page (/admin/forms/:id/view): the same page a respondent sees,
 // loaded by form id so drafts work too. It starts no session and no tracker (a preview must not
@@ -136,6 +137,7 @@ export default function FormFill({ preview = false }) {
 
   return (
     <main className="fill">
+      {!preview && <div className="corner"><ThemeToggle /></div>}
       {preview && (
         <div className="preview-bar">
           <p className="hint">Viewing as a respondent would see it{form.status && form.status !== 'published' ? ` (${form.status}, not yet public)` : ''}.</p>
