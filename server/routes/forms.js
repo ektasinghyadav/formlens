@@ -94,7 +94,7 @@ function formSummary(f) {
 
 async function loadFields(db, formId) {
   const [rows] = await db.query(
-    'SELECT field_id, field_type, label, is_required, position, validations FROM fields WHERE form_id = ? ORDER BY position',
+    'SELECT field_id, field_type, label, is_required, position, validations FROM fields WHERE form_id = ? AND archived_at IS NULL ORDER BY position',
     [formId]
   );
   return rows.map((r) => ({ ...r, is_required: Boolean(r.is_required) })); // MySQL gives 0/1
@@ -155,7 +155,7 @@ router.put('/:formId', ...owner, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [existing] = await conn.query('SELECT field_id FROM fields WHERE form_id = ?', [req.form.form_id]);
+    const [existing] = await conn.query('SELECT field_id FROM fields WHERE form_id = ? AND archived_at IS NULL', [req.form.form_id]);
     const existingIds = new Set(existing.map((r) => r.field_id));
 
     // a field_id sent back must belong to THIS form and appear only once
@@ -167,16 +167,15 @@ router.put('/:formId', ...owner, async (req, res) => {
 
     await conn.query('UPDATE forms SET title = ? WHERE form_id = ?', [input.title, req.form.form_id]);
 
+    // D-25: a removed field with no data is deleted; one with events or answers is archived
+    // (hidden from respondents, the editor and the field widgets; its history stays in the database).
     const removed = [...existingIds].filter((id) => !sentIds.includes(id));
-    if (removed.length) {
+    for (const id of removed) {
       try {
-        await conn.query('DELETE FROM fields WHERE field_id IN (?)', [removed]);
+        await conn.query('DELETE FROM fields WHERE field_id = ?', [id]);
       } catch (err) {
-        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-          await conn.rollback();
-          return res.status(409).json({ error: 'A field with recorded responses or events cannot be deleted' });
-        }
-        throw err;
+        if (err.code !== 'ER_ROW_IS_REFERENCED_2') throw err;
+        await conn.query('UPDATE fields SET archived_at = NOW() WHERE field_id = ?', [id]);
       }
     }
 
@@ -205,7 +204,7 @@ router.put('/:formId', ...owner, async (req, res) => {
 
 // PATCH /forms/:formId/publish - make the form public; create the link the first time (FR-1.3)
 router.patch('/:formId/publish', ...owner, async (req, res) => {
-  const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM fields WHERE form_id = ?', [req.form.form_id]);
+  const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM fields WHERE form_id = ? AND archived_at IS NULL', [req.form.form_id]);
   if (n === 0) return res.status(409).json({ error: 'Add at least one field before publishing' });
 
   // 12 random bytes -> 16 URL-safe characters: 96 bits, not guessable
@@ -276,7 +275,7 @@ router.get('/:shareLink/public', async (req, res) => {
 router.post('/:formId/upload', async (req, res, next) => {
   const [rows] = await pool.query(
     `SELECT f.field_id, f.validations FROM fields f JOIN forms fo ON fo.form_id = f.form_id
-     WHERE f.field_id = ? AND f.form_id = ? AND f.field_type = 'file' AND fo.status = 'published'`,
+     WHERE f.field_id = ? AND f.form_id = ? AND f.archived_at IS NULL AND f.field_type = 'file' AND fo.status = 'published'`,
     [String(req.query.field_id || ''), req.params.formId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'This form is not available' });

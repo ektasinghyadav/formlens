@@ -116,3 +116,20 @@ describe('date range (FR-6.2)', () => {
     for (const kind of ['summary', 'funnel', 'fields']) expect((await api(url(kind, q), tokenA)).status).toBe(400);
   });
 });
+
+// kept last: it changes the shared fixture (D-25)
+describe('archived fields (D-25)', () => {
+  it('drop out of the field widgets but never change the form totals', async () => {
+    const summaryBefore = (await api(url('summary', `?from=${monthAgo()}`), tokenA)).body;
+    const fieldsBefore = (await api(url('fields', `?from=${monthAgo()}`), tokenA)).body;
+    await pool.query('UPDATE fields SET archived_at = NOW() WHERE field_id = ?', [fx.fieldIds[0]]);
+
+    const summary = (await api(url('summary', `?from=${monthAgo()}`), tokenA)).body;
+    expect(summary).toEqual(summaryBefore);
+    for (const kind of ['funnel', 'fields']) {
+      const body = (await api(url(kind, `?from=${monthAgo()}`), tokenA)).body;
+      expect(body.map((f) => f.field_id)).not.toContain(fx.fieldIds[0]);
+      expect(body).toHaveLength(fieldsBefore.length - 1);
+    }
+  });
+});

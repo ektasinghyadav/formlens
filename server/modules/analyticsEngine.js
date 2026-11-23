@@ -50,7 +50,7 @@ const sharedKey = (kind, formId, { from, to, now }, extra = '') =>
   JSON.stringify([kind, formId, from?.getTime() ?? null, to?.getTime() ?? null, Math.floor(now.getTime() / 60000), extra]);
 
 const fieldsOf = async (db, formId) =>
-  (await db.query('SELECT field_id, label, position FROM fields WHERE form_id = ? ORDER BY position', [formId]))[0];
+  (await db.query('SELECT field_id, label, position FROM fields WHERE form_id = ? AND archived_at IS NULL ORDER BY position', [formId]))[0];
 
 // Status of every session in the range: Map(session_id -> 'submitted' | 'abandoned' | 'active')
 function loadStatuses(db, formId, range) {

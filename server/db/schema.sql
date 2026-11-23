@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS fields (
   is_required BOOLEAN      NOT NULL DEFAULT FALSE,
   position    INT          NOT NULL,              -- order of the field in the form
   validations JSON         NULL,                  -- e.g. {"format":"email","maxFileSizeMB":5,"options":[...]}
+  archived_at TIMESTAMP    NULL,                  -- set when the admin removes a field that already has data (D-25)
   FOREIGN KEY (form_id) REFERENCES forms (form_id)
 );
 

@@ -133,8 +133,8 @@ describe('edit (FR-1.4)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('refuses to delete a field that already has recorded events (409) and changes nothing', async () => {
-    const { body: { form_id } } = await api('post', '/forms', tokenA).send({ title: 'Has data', fields: fiveFields.slice(0, 2) });
+  it('archives a removed field that has recorded events instead of deleting it (D-25)', async () => {
+    const { body: { form_id } } = await api('post', '/forms', tokenA).send({ title: 'Has data', fields: fiveFields.slice(0, 3) });
     const fields = (await api('get', `/forms/${form_id}`, tokenA)).body.fields;
     const sessionId = randomUUID();
     await pool.query('INSERT INTO sessions (session_id, form_id, ip_hash) VALUES (?, ?, ?)', [sessionId, form_id, 'x'.repeat(64)]);
@@ -143,11 +143,20 @@ describe('edit (FR-1.4)', () => {
       [randomUUID(), sessionId, fields[1].field_id, form_id]
     );
 
-    const res = await api('put', `/forms/${form_id}`, tokenA).send({ title: 'Renamed?', fields: [fields[0]] });
-    expect(res.status).toBe(409);
-    const still = (await api('get', `/forms/${form_id}`, tokenA)).body;
-    expect(still.title).toBe('Has data'); // whole edit rolled back
-    expect(still.fields).toHaveLength(2);
+    // remove field 1 (has data) and field 2 (no data)
+    const res = await api('put', `/forms/${form_id}`, tokenA).send({ title: 'Renamed', fields: [fields[0]] });
+    expect(res.status).toBe(200);
+    const now = (await api('get', `/forms/${form_id}`, tokenA)).body;
+    expect(now.title).toBe('Renamed');
+    expect(now.fields.map((f) => f.field_id)).toEqual([fields[0].field_id]); // editor and respondents see one field
+    const [rows] = await pool.query('SELECT field_id, archived_at FROM fields WHERE form_id = ?', [form_id]);
+    expect(rows.map((r) => r.field_id)).toEqual(expect.arrayContaining([fields[0].field_id, fields[1].field_id]));
+    expect(rows.find((r) => r.field_id === fields[1].field_id).archived_at).not.toBeNull(); // archived, history kept
+    expect(rows.some((r) => r.field_id === fields[2].field_id)).toBe(false); // no data: really deleted
+    const [[{ n }]] = await pool.query('SELECT COUNT(*) n FROM events WHERE field_id = ?', [fields[1].field_id]);
+    expect(n).toBe(1);
+    // an archived field cannot be sent back in
+    expect((await api('put', `/forms/${form_id}`, tokenA).send({ title: 'x', fields: [fields[0], fields[1]] })).status).toBe(400);
   });
 });
 

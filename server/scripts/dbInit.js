@@ -17,6 +17,12 @@ const conn = await mysql.createConnection({
 
 try {
   await conn.query(sql);
+  // D-25: databases made before the archive feature lack fields.archived_at (CREATE TABLE IF NOT EXISTS
+  // does not change an existing table), so add it once.
+  const [[{ n }]] = await conn.query(
+    "SELECT COUNT(*) AS n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'fields' AND column_name = 'archived_at'"
+  );
+  if (n === 0) await conn.query('ALTER TABLE fields ADD COLUMN archived_at TIMESTAMP NULL');
   const [tables] = await conn.query('SHOW TABLES');
   console.log(`Schema applied. ${tables.length} tables in ${process.env.DB_NAME}.`);
 } finally {
