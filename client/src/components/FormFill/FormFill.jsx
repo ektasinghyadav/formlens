@@ -183,8 +183,8 @@ export default function FormFill({ preview = false }) {
               ) : (
                 <input {...common}
                   type={f.field_type === 'email' ? 'email' : 'text'}
-                  inputMode={f.field_type === 'number' ? 'decimal' : undefined}
-                  autoComplete={f.field_type === 'email' ? 'email' : 'off'}
+                  inputMode={f.field_type === 'number' ? 'decimal' : f.validations?.format === 'phone' ? 'tel' : undefined}
+                  autoComplete={f.field_type === 'email' ? 'email' : f.validations?.format === 'phone' ? 'tel' : 'off'}
                   value={values[f.field_id] ?? ''}
                   onChange={(e) => onChange(f, e.target.value)} onBlur={() => check(f, values[f.field_id], undefined)} />
               )}

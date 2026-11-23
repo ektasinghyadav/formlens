@@ -50,6 +50,7 @@ export default function FieldEditor({ field, index, total, onChange, onMove, onD
             <option value="">Anything</option>
             <option value="email">An email address</option>
             <option value="number">A number</option>
+            <option value="phone">A phone number (10 digits)</option>
           </select>
         </div>
       )}

@@ -2,7 +2,9 @@
 // Plain function, no React. The server repeats every check (never trust the browser);
 // these exist so the person gets help immediately instead of after pressing Submit.
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// name@domain.tld: no spaces, one @, a dot in the domain, a last part of 2+ letters, no empty parts like "a..b"
+const EMAIL = /^[^\s@.]+(\.[^\s@.]+)*@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/;
+const PHONE = /^\d{10}$/; // exactly 10 digits, nothing else
 const NUMBER = /^-?\d+(\.\d+)?$/;
 
 // Returns an error message (string) or '' when the answer is fine.
@@ -23,6 +25,7 @@ export function validateAnswer(field, value, file) {
 
   const format = field.field_type === 'text' ? rules.format : field.field_type;
   if (format === 'email' && !EMAIL.test(text)) return 'Enter a valid email address, like name@example.com';
+  if (format === 'phone' && !PHONE.test(text)) return 'Enter a 10-digit phone number, like 9876543210';
   if (format === 'number' && !NUMBER.test(text)) return 'Enter a number, like 42';
   if (field.field_type === 'dropdown' && !rules.options.includes(text)) return 'Choose one of the listed options';
   return '';

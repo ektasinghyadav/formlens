@@ -14,6 +14,20 @@ describe('validateAnswer', () => {
     expect(validateAnswer(field('email'), 'a@b.co')).toBe('');
     expect(validateAnswer(field('text', { validations: { format: 'email' } }), 'nope')).toMatch(/valid email/);
   });
+  it('rejects email shapes that only look right', () => {
+    for (const bad of ['a@b', 'a@b.c', 'a@@b.com', 'a b@c.com', 'a@b..com', '.a@b.com', 'a@b.com.']) {
+      expect(validateAnswer(field('email'), bad), bad).toMatch(/valid email/);
+    }
+    for (const ok of ['a@b.co', 'first.last@mail.example.org', 'x+tag@site.in']) expect(validateAnswer(field('email'), ok), ok).toBe('');
+  });
+  it('checks a 10-digit phone number', () => {
+    const phone = field('text', { validations: { format: 'phone' } });
+    for (const bad of ['98765', '98765432101', '98765 43210', '+919876543210', '98765abc10', '12345.6789']) {
+      expect(validateAnswer(phone, bad), bad).toMatch(/10-digit/);
+    }
+    expect(validateAnswer(phone, '9876543210')).toBe('');
+    expect(validateAnswer(phone, '')).toBe(''); // optional and empty is fine
+  });
   it('checks numbers', () => {
     expect(validateAnswer(field('number'), 'abc')).toMatch(/number/);
     expect(validateAnswer(field('number'), '-12.5')).toBe('');

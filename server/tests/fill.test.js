@@ -216,3 +216,28 @@ describe('file upload (D-1, FR-1.2)', () => {
     expect(swapped.status).toBe(400); // a Photo upload cannot be passed off as the Resume
   });
 });
+
+describe('phone and strict email formats', () => {
+  it('the server enforces a 10-digit phone and a real-looking email even if the browser is bypassed', async () => {
+    const id = (await auth(api('post', '/forms')).send({
+      title: 'Phone form',
+      fields: [{ field_type: 'text', label: 'Phone', validations: { format: 'phone' } }, { field_type: 'email', label: 'Mail' }],
+    })).body.form_id;
+    await auth(api('patch', `/forms/${id}/publish`));
+    const [phone, mail] = (await auth(api('get', `/forms/${id}`))).body.fields;
+    const answer = (p, m) => [{ field_id: phone.field_id, value: p }, { field_id: mail.field_id, value: m }];
+
+    for (const [p, m] of [['98765', 'a@b.co'], ['98765 43210', 'a@b.co'], ['9876543210', 'a@b'], ['9876543210', 'a@b.c']]) {
+      const res = await submit(await newSession(id), answer(p, m), id);
+      expect(res.status, `${p} / ${m}`).toBe(400);
+    }
+    const bad = await submit(await newSession(id), answer('12345', 'a@b.co'), id);
+    expect(bad.body.fieldErrors[phone.field_id]).toMatch(/10-digit/);
+    expect((await submit(await newSession(id), answer('9876543210', 'asha@example.com'), id)).status).toBe(201);
+  });
+
+  it('refuses an unknown text format when the form is saved', async () => {
+    const res = await auth(api('post', '/forms')).send({ title: 'x', fields: [{ field_type: 'text', label: 'P', validations: { format: 'pincode' } }] });
+    expect(res.status).toBe(400);
+  });
+});

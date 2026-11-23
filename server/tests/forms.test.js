@@ -86,7 +86,7 @@ describe('create and read (FR-1.1, FR-1.2)', () => {
     ['dropdown with duplicate options', { title: 'x', fields: [{ field_type: 'dropdown', label: 'd', validations: { options: ['a', 'a'] } }] }],
     ['file size of 0', { title: 'x', fields: [{ field_type: 'file', label: 'f', validations: { maxFileSizeMB: 0 } }] }],
     ['file size too large', { title: 'x', fields: [{ field_type: 'file', label: 'f', validations: { maxFileSizeMB: 100 } }] }],
-    ['bad text format', { title: 'x', fields: [{ field_type: 'text', label: 't', validations: { format: 'phone' } }] }],
+    ['bad text format', { title: 'x', fields: [{ field_type: 'text', label: 't', validations: { format: 'pincode' } }] }],
     ['too many fields', { title: 'x', fields: Array.from({ length: 51 }, () => ({ field_type: 'text', label: 't' })) }],
   ])('rejects %s with 400 and saves nothing', async (name, body) => {
     const before = (await api('get', '/forms', tokenA)).body.length;

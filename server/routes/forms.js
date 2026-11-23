@@ -32,7 +32,7 @@ function cleanField(raw, index) {
   let validations = null;
 
   if (raw.field_type === 'text' && v.format !== undefined && v.format !== null && v.format !== '') {
-    if (!['email', 'number'].includes(v.format)) return { error: `${where}: format must be email or number` };
+    if (!['email', 'number', 'phone'].includes(v.format)) return { error: `${where}: format must be email, number or phone` };
     validations = { format: v.format };
   }
   if (raw.field_type === 'dropdown') {
@@ -229,7 +229,8 @@ router.patch('/:formId/unpublish', ...owner, async (req, res) => {
 // PUBLIC respondent endpoints - no login. Only PUBLISHED forms are reachable.
 // =====================================================================
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@.]+(\.[^\s@.]+)*@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/; // same rule as the browser (validate.js)
+const PHONE_PATTERN = /^\d{10}$/; // exactly 10 digits
 const NUMBER_PATTERN = /^-?\d+(\.\d+)?$/;
 const MAX_ANSWER_LENGTH = 5000; // D-18c
 const FILE_REF_PATTERN = /^[0-9a-f-]{36}-[0-9a-f-]{36}$/; // "<field_id>-<uuid>"
@@ -247,6 +248,7 @@ async function checkAnswer(field, raw) {
   const rules = field.validations || {};
   const format = field.field_type === 'text' ? rules.format : field.field_type;
   if (format === 'email' && !EMAIL_PATTERN.test(value)) return { error: 'Enter a valid email address, like name@example.com' };
+  if (format === 'phone' && !PHONE_PATTERN.test(value)) return { error: 'Enter a 10-digit phone number, like 9876543210' };
   if (format === 'number' && !NUMBER_PATTERN.test(value)) return { error: 'Enter a number, like 42' };
   if (field.field_type === 'dropdown' && !rules.options.includes(value)) return { error: 'Choose one of the listed options' };
   if (field.field_type === 'file') {
