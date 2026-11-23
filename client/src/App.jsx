@@ -18,6 +18,7 @@ export default function App() {
       {/* everything under /admin needs a login (FR-8.1) */}
       <Route element={<ProtectedRoute />}>
         <Route path="/admin/forms" element={<FormList />} />
+        <Route path="/admin/forms/:id/view" element={<FormFill preview />} />
         <Route path="/admin/forms/:id/edit" element={<FormEditor />} />
         <Route path="/admin/forms/:id/dashboard" element={<Suspense fallback={<p className="p-6">Loading…</p>}><Dashboard /></Suspense>} />
       </Route>

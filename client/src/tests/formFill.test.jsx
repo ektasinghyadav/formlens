@@ -177,3 +177,32 @@ describe('keyboard-only use (NFR-4.2)', () => {
     expect(screen.getByRole('button', { name: 'Submit' }).getAttribute('type')).toBe('submit');
   });
 });
+
+describe('admin preview (View form)', () => {
+  function openPreview() {
+    formsApi.getForm.mockResolvedValue({ data: { ...publicForm, status: 'draft' } });
+    return render(
+      <MemoryRouter initialEntries={['/admin/forms/F1/view']}>
+        <Routes><Route path="/admin/forms/:id/view" element={<FormFill preview />} /></Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it('shows the respondent page with an Edit button, and records nothing', async () => {
+    openPreview();
+    await screen.findByRole('heading', { name: 'Job application' });
+    expect(screen.getByRole('link', { name: 'Edit form' }).getAttribute('href')).toBe('/admin/forms/F1/edit');
+    expect(screen.getByLabelText(/Full name/)).toBeTruthy();
+    expect(formsApi.createSession).not.toHaveBeenCalled();
+    expect(createTracker).not.toHaveBeenCalled();
+  });
+
+  it('never submits: a valid form only says it is a preview', async () => {
+    openPreview();
+    await screen.findByRole('heading', { name: 'Job application' });
+    typeInto(/Full name/, 'Asha');
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    expect(await screen.findByText(/Preview only/)).toBeTruthy();
+    expect(formsApi.submitForm).not.toHaveBeenCalled();
+  });
+});

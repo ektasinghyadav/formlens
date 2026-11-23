@@ -4,13 +4,16 @@
 // Accessibility choices: every input has a visible <label>; errors are real text linked with
 // aria-describedby (not only red colour); required fields say "(required)" in words.
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { createSession, getPublicForm, submitForm, uploadFile } from '../../api/forms.js';
+import { Link, useParams } from 'react-router-dom';
+import { createSession, getForm, getPublicForm, submitForm, uploadFile } from '../../api/forms.js';
 import { createTracker } from '../../tracker/eventTracker.js';
 import { validateAnswer } from './validate.js';
 
-export default function FormFill() {
-  const { shareLink } = useParams();
+// preview = the admin's "View form" page (/admin/forms/:id/view): the same page a respondent sees,
+// loaded by form id so drafts work too. It starts no session and no tracker (a preview must not
+// add fake visits to the dashboard) and never submits. It adds an Edit button for the owner.
+export default function FormFill({ preview = false }) {
+  const { shareLink, id } = useParams();
   const [state, setState] = useState('loading'); // loading | ready | unavailable | error | done
   const [form, setForm] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -26,25 +29,25 @@ export default function FormFill() {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await getPublicForm(shareLink);
+        const { data } = preview ? await getForm(id) : await getPublicForm(shareLink);
         if (cancelled) return; // React dev mode runs effects twice; only the last run starts a session
-        const session = await createSession(data.form_id);
+        const session = preview ? null : await createSession(data.form_id);
         if (cancelled) return;
-        setForm(data);
-        setSessionId(session.data.session_id);
+        setForm(preview ? { ...data, form_id: id } : data);
+        setSessionId(session ? session.data.session_id : null);
         setState('ready');
       } catch (err) {
         if (!cancelled) setState(err.response?.status === 404 ? 'unavailable' : 'error');
       }
     })();
     return () => { cancelled = true; };
-  }, [shareLink]);
+  }, [shareLink, id, preview]);
 
   // The ONLY place FormFill touches tracking (SPEC section 4): start it when the form is on
   // screen, stop it when the form goes away (e.g. after a successful submit). All the
   // listening happens inside eventTracker.js.
   useEffect(() => {
-    if (state !== 'ready') return undefined;
+    if (state !== 'ready' || preview) return undefined;
     const tracker = createTracker({
       formId: form.form_id,
       sessionId,
@@ -53,7 +56,7 @@ export default function FormFill() {
     });
     tracker.start();
     return () => tracker.stop();
-  }, [state, form, sessionId]);
+  }, [state, form, sessionId, preview]);
 
   // Check one field now and show or clear its message (runs on blur, and while typing after that).
   function check(field, value, file) {
@@ -82,6 +85,7 @@ export default function FormFill() {
       formRef.current?.querySelector(`#field-${firstBad.field_id}`)?.focus(); // keyboard users land on the problem
       return;
     }
+    if (preview) { setFormError('Preview only: nothing was submitted.'); return; }
 
     setBusy(true);
     try {
@@ -132,6 +136,15 @@ export default function FormFill() {
 
   return (
     <main className="fill">
+      {preview && (
+        <div className="preview-bar">
+          <p className="hint">Viewing as a respondent would see it{form.status && form.status !== 'published' ? ` (${form.status}, not yet public)` : ''}.</p>
+          <div className="row-actions">
+            <Link to="/admin/forms" className="link">Back to forms</Link>
+            <Link to={`/admin/forms/${id}/edit`} className="btn btn-small">Edit form</Link>
+          </div>
+        </div>
+      )}
       <h1>{form.title}</h1>
 
       {/* NFR-7.1: the person is told, in plain words, that interactions are recorded. */}
@@ -181,7 +194,7 @@ export default function FormFill() {
           );
         })}
 
-        {formError && <p role="alert" className="error">Error: {formError}</p>}
+        {formError && <p role="alert" className="error">{preview ? '' : 'Error: '}{formError}</p>}
         <button type="submit" disabled={busy} className="btn btn-block" style={{ minHeight: 48 }}>
           {busy ? 'Submitting…' : 'Submit'}
         </button>

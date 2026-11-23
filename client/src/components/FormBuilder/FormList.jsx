@@ -68,7 +68,7 @@ export default function FormList() {
                 </div>
               </div>
               <div className="row-actions">
-                <Link to={`/admin/forms/${f.form_id}/edit`} className="link">Edit</Link>
+                <Link to={`/admin/forms/${f.form_id}/view`} className="link">View form</Link>
                 {f.status !== 'published' && (
                   <button type="button" onClick={() => change(publishForm, f.form_id)} className="link">Publish</button>
                 )}
